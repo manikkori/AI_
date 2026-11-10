@@ -1,66 +1,94 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../auth.context";
 import { login, register, logout, getMe } from "../services/auth.api";
 
-
-
 export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
 
-    const context = useContext(AuthContext)
-    const { user, setUser, loading, setLoading } = context
-
+    const { user, setUser, loading, setLoading } = context;
+    const [authError, setAuthError] = useState("");
 
     const handleLogin = async ({ email, password }) => {
-        setLoading(true)
+        setLoading(true);
+        setAuthError("");
         try {
-            const data = await login({ email, password })
-            setUser(data.user)
+            const data = await login({ email, password });
+            if (data?.user) {
+                setUser(data.user);
+                return data.user;
+            }
         } catch (err) {
-
+            const msg = err.response?.data?.message || "Login failed. Please check your credentials.";
+            setAuthError(msg);
+            throw err;
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }
+    };
 
     const handleRegister = async ({ username, email, password }) => {
-        setLoading(true)
+        setLoading(true);
+        setAuthError("");
         try {
-            const data = await register({ username, email, password })
-            setUser(data.user)
+            const data = await register({ username, email, password });
+            if (data?.user) {
+                setUser(data.user);
+                return data.user;
+            }
         } catch (err) {
-
+            const msg = err.response?.data?.message || "Registration failed. Please try again.";
+            setAuthError(msg);
+            throw err;
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }
+    };
 
     const handleLogout = async () => {
-        setLoading(true)
+        setLoading(true);
         try {
-            const data = await logout()
-            setUser(null)
+            await logout();
+            setUser(null);
         } catch (err) {
-
+            console.error("Logout error:", err);
+            setUser(null); // still clear local state
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }
+    };
 
     useEffect(() => {
-
-        const getAndSetUser = async () => {
-            try {
-
-                const data = await getMe()
-                setUser(data.user)
-            } catch (err) { } finally {
-                setLoading(false)
-            }
+        // Fetch current user if not already set
+        if (!user) {
+            const getAndSetUser = async () => {
+                try {
+                    const data = await getMe();
+                    if (data?.user) {
+                        setUser(data.user);
+                    }
+                } catch (err) {
+                    // Not logged in or session expired
+                    setUser(null);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            getAndSetUser();
+        } else {
+            setLoading(false);
         }
+    }, []);
 
-        getAndSetUser()
-
-    }, [])
-
-    return { user, loading, handleRegister, handleLogin, handleLogout }
-}
+    return {
+        user,
+        loading,
+        authError,
+        setAuthError,
+        handleRegister,
+        handleLogin,
+        handleLogout
+    };
+};

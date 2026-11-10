@@ -1,195 +1,696 @@
-import React, { useState, useEffect } from 'react'
-import '../style/interview.scss'
-import { useInterview } from '../hooks/useInterview.js'
-import { useNavigate, useParams } from 'react-router'
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, Link } from 'react-router';
+import { useInterview } from '../hooks/useInterview';
+import Layout from '../../../components/Layout';
+import {
+    ArrowLeft,
+    Download,
+    CheckCircle,
+    CheckCircle2,
+    Circle,
+    Code,
+    MessageSquare,
+    Calendar,
+    AlertTriangle,
+    FileText,
+    Copy,
+    Check,
+    Search,
+    Loader2,
+    Clock,
+    Sparkles,
+    ChevronDown,
+    ChevronUp,
+    ExternalLink,
+    Zap,
+    Briefcase
+} from 'lucide-react';
+import '../style/interview.scss';
 
-
-
-const NAV_ITEMS = [
-    { id: 'technical', label: 'Technical Questions', icon: (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>) },
-    { id: 'behavioral', label: 'Behavioral Questions', icon: (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>) },
-    { id: 'roadmap', label: 'Road Map', icon: (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11" /></svg>) },
-]
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-const QuestionCard = ({ item, index }) => {
-    const [ open, setOpen ] = useState(false)
-    return (
-        <div className='q-card'>
-            <div className='q-card__header' onClick={() => setOpen(o => !o)}>
-                <span className='q-card__index'>Q{index + 1}</span>
-                <p className='q-card__question'>{item.question}</p>
-                <span className={`q-card__chevron ${open ? 'q-card__chevron--open' : ''}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-                </span>
-            </div>
-            {open && (
-                <div className='q-card__body'>
-                    <div className='q-card__section'>
-                        <span className='q-card__tag q-card__tag--intention'>Intention</span>
-                        <p>{item.intention}</p>
-                    </div>
-                    <div className='q-card__section'>
-                        <span className='q-card__tag q-card__tag--answer'>Model Answer</span>
-                        <p>{item.answer}</p>
-                    </div>
-                </div>
-            )}
-        </div>
-    )
-}
-
-const RoadMapDay = ({ day }) => (
-    <div className='roadmap-day'>
-        <div className='roadmap-day__header'>
-            <span className='roadmap-day__badge'>Day {day.day}</span>
-            <h3 className='roadmap-day__focus'>{day.focus}</h3>
-        </div>
-        <ul className='roadmap-day__tasks'>
-            {day.tasks.map((task, i) => (
-                <li key={i}>
-                    <span className='roadmap-day__bullet' />
-                    {task}
-                </li>
-            ))}
-        </ul>
-    </div>
-)
-
-// ── Main Component ────────────────────────────────────────────────────────────
 const Interview = () => {
-    const [ activeNav, setActiveNav ] = useState('technical')
-    const { report, getReportById, loading, getResumePdf } = useInterview()
-    const { interviewId } = useParams()
+    const { interviewId } = useParams();
+    const navigate = useNavigate();
+    const {
+        report,
+        getReportById,
+        loading,
+        getResumePdf,
+        downloadingResume
+    } = useInterview();
+
+    const [activeTab, setActiveTab] = useState('technical');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [openQuestions, setOpenQuestions] = useState({});
+    const [copiedIndex, setCopiedIndex] = useState(null);
+    const [completedTasks, setCompletedTasks] = useState({});
+    const [practicedQuestions, setPracticedQuestions] = useState({});
 
     useEffect(() => {
         if (interviewId) {
-            getReportById(interviewId)
+            getReportById(interviewId);
         }
-    }, [ interviewId ])
+    }, [interviewId]);
 
+    // Toggle question accordion
+    const toggleQuestion = (id) => {
+        setOpenQuestions(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
 
+    // Copy to clipboard helper
+    const handleCopy = (text, key) => {
+        navigator.clipboard.writeText(text);
+        setCopiedIndex(key);
+        setTimeout(() => setCopiedIndex(null), 2000);
+    };
+
+    // Toggle task in roadmap
+    const toggleTask = (dayIndex, taskIndex) => {
+        const key = `${dayIndex}-${taskIndex}`;
+        setCompletedTasks(prev => ({
+            ...prev,
+            [key]: !prev[key]
+        }));
+    };
+
+    // Toggle practiced question
+    const togglePracticed = (questionId) => {
+        setPracticedQuestions(prev => ({
+            ...prev,
+            [questionId]: !prev[questionId]
+        }));
+    };
 
     if (loading || !report) {
         return (
-            <main className='loading-screen'>
-                <h1>Loading your interview plan...</h1>
-            </main>
-        )
+            <Layout>
+                <div className="interview-loading-container">
+                    <Loader2 size={36} className="animate-spin loader-icon" />
+                    <h2>Loading your customized career strategy...</h2>
+                    <p>Retrieving Groq AI analysis, questions, and ATS resume data.</p>
+                </div>
+            </Layout>
+        );
     }
 
-    const scoreColor =
-        report.matchScore >= 80 ? 'score--high' :
-            report.matchScore >= 60 ? 'score--mid' : 'score--low'
+    const score = report.matchScore ?? 0;
+    const scoreColorClass =
+        score >= 80 ? 'score-high' :
+        score >= 60 ? 'score-mid' : 'score-low';
 
+    // Calculate roadmap progress
+    const totalTasks = report.preparationPlan?.reduce((acc, curr) => acc + (curr.tasks?.length || 0), 0) || 0;
+    const completedTasksCount = Object.values(completedTasks).filter(Boolean).length;
+    const roadmapProgressPct = totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0;
+
+    // Filter questions by search query
+    const filteredTechQuestions = (report.technicalQuestions || []).filter(q =>
+        q.question?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        q.answer?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredBehavioralQuestions = (report.behavioralQuestions || []).filter(q =>
+        q.question?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        q.answer?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
-        <div className='interview-page'>
-            <div className='interview-layout'>
-
-                {/* ── Left Nav ── */}
-                <nav className='interview-nav'>
-                    <div className="nav-content">
-                        <p className='interview-nav__label'>Sections</p>
-                        {NAV_ITEMS.map(item => (
-                            <button
-                                key={item.id}
-                                className={`interview-nav__item ${activeNav === item.id ? 'interview-nav__item--active' : ''}`}
-                                onClick={() => setActiveNav(item.id)}
-                            >
-                                <span className='interview-nav__icon'>{item.icon}</span>
-                                {item.label}
-                            </button>
-                        ))}
-                    </div>
-                    <button
-                        onClick={() => { getResumePdf(interviewId) }}
-                        className='button primary-button' >
-                        <svg height={"0.8rem"} style={{ marginRight: "0.8rem" }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10.6144 17.7956 11.492 15.7854C12.2731 13.9966 13.6789 12.5726 15.4325 11.7942L17.8482 10.7219C18.6162 10.381 18.6162 9.26368 17.8482 8.92277L15.5079 7.88394C13.7092 7.08552 12.2782 5.60881 11.5105 3.75894L10.6215 1.61673C10.2916.821765 9.19319.821767 8.8633 1.61673L7.97427 3.75892C7.20657 5.60881 5.77553 7.08552 3.97685 7.88394L1.63658 8.92277C.868537 9.26368.868536 10.381 1.63658 10.7219L4.0523 11.7942C5.80589 12.5726 7.21171 13.9966 7.99275 15.7854L8.8704 17.7956C9.20776 18.5682 10.277 18.5682 10.6144 17.7956ZM19.4014 22.6899 19.6482 22.1242C20.0882 21.1156 20.8807 20.3125 21.8695 19.8732L22.6299 19.5353C23.0412 19.3526 23.0412 18.7549 22.6299 18.5722L21.9121 18.2532C20.8978 17.8026 20.0911 16.9698 19.6586 15.9269L19.4052 15.3156C19.2285 14.8896 18.6395 14.8896 18.4628 15.3156L18.2094 15.9269C17.777 16.9698 16.9703 17.8026 15.956 18.2532L15.2381 18.5722C14.8269 18.7549 14.8269 19.3526 15.2381 19.5353L15.9985 19.8732C16.9874 20.3125 17.7798 21.1156 18.2198 22.1242L18.4667 22.6899C18.6473 23.104 19.2207 23.104 19.4014 22.6899Z"></path></svg>
-                        Download Resume
-                    </button>
-                </nav>
-
-                <div className='interview-divider' />
-
-                {/* ── Center Content ── */}
-                <main className='interview-content'>
-                    {activeNav === 'technical' && (
-                        <section>
-                            <div className='content-header'>
-                                <h2>Technical Questions</h2>
-                                <span className='content-header__count'>{report.technicalQuestions.length} questions</span>
-                            </div>
-                            <div className='q-list'>
-                                {report.technicalQuestions.map((q, i) => (
-                                    <QuestionCard key={i} item={q} index={i} />
-                                ))}
-                            </div>
-                        </section>
-                    )}
-
-                    {activeNav === 'behavioral' && (
-                        <section>
-                            <div className='content-header'>
-                                <h2>Behavioral Questions</h2>
-                                <span className='content-header__count'>{report.behavioralQuestions.length} questions</span>
-                            </div>
-                            <div className='q-list'>
-                                {report.behavioralQuestions.map((q, i) => (
-                                    <QuestionCard key={i} item={q} index={i} />
-                                ))}
-                            </div>
-                        </section>
-                    )}
-
-                    {activeNav === 'roadmap' && (
-                        <section>
-                            <div className='content-header'>
-                                <h2>Preparation Road Map</h2>
-                                <span className='content-header__count'>{report.preparationPlan.length}-day plan</span>
-                            </div>
-                            <div className='roadmap-list'>
-                                {report.preparationPlan.map((day) => (
-                                    <RoadMapDay key={day.day} day={day} />
-                                ))}
-                            </div>
-                        </section>
-                    )}
-                </main>
-
-                <div className='interview-divider' />
-
-                {/* ── Right Sidebar ── */}
-                <aside className='interview-sidebar'>
-
-                    {/* Match Score */}
-                    <div className='match-score'>
-                        <p className='match-score__label'>Match Score</p>
-                        <div className={`match-score__ring ${scoreColor}`}>
-                            <span className='match-score__value'>{report.matchScore}</span>
-                            <span className='match-score__pct'>%</span>
+        <Layout>
+            <div className="interview-page-wrapper">
+                {/* ── Top Navigation Bar / Breadcrumb ── */}
+                <div className="interview-topbar">
+                    <div className="topbar-left">
+                        <button
+                            type="button"
+                            onClick={() => navigate('/')}
+                            className="back-btn"
+                            title="Back to Dashboard"
+                        >
+                            <ArrowLeft size={16} />
+                            <span>Dashboard</span>
+                        </button>
+                        <div className="breadcrumb-divider">/</div>
+                        <div className="job-title-pill">
+                            <Briefcase size={14} className="pill-icon" />
+                            <span className="pill-text">{report.title || 'Role Analysis'}</span>
                         </div>
-                        <p className='match-score__sub'>Strong match for this role</p>
                     </div>
 
-                    <div className='sidebar-divider' />
+                    <div className="topbar-right">
+                        <button
+                            type="button"
+                            onClick={() => getResumePdf(interviewId)}
+                            disabled={downloadingResume}
+                            className="button primary-button download-resume-btn"
+                        >
+                            {downloadingResume ? (
+                                <>
+                                    <Loader2 size={16} className="animate-spin" />
+                                    <span>Rendering ATS Resume...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Download size={16} />
+                                    <span>Download ATS Resume (PDF)</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
 
-                    {/* Skill Gaps */}
-                    <div className='skill-gaps'>
-                        <p className='skill-gaps__label'>Skill Gaps</p>
-                        <div className='skill-gaps__list'>
-                            {report.skillGaps.map((gap, i) => (
-                                <span key={i} className={`skill-tag skill-tag--${gap.severity}`}>
-                                    {gap.skill}
+                {/* ── Main Two-Column Layout ── */}
+                <div className="interview-layout-container">
+                    {/* ── Left Sidebar Navigation ── */}
+                    <aside className="interview-sidebar-nav">
+                        {/* Match Score Card */}
+                        <div className={`score-card ${scoreColorClass}`}>
+                            <div className="score-header">
+                                <span className="score-title">Job Match Score</span>
+                                <span className="score-tag">
+                                    {score >= 80 ? 'Strong Fit' : score >= 60 ? 'Moderate Fit' : 'Skills Gap'}
                                 </span>
-                            ))}
+                            </div>
+                            <div className="score-display">
+                                <span className="score-number">{score}</span>
+                                <span className="score-pct">%</span>
+                            </div>
+                            <div className="score-bar-bg">
+                                <div
+                                    className="score-bar-fill"
+                                    style={{ width: `${score}%` }}
+                                ></div>
+                            </div>
+                            <p className="score-subtext">
+                                {score >= 80
+                                    ? 'Your background strongly aligns with this job description.'
+                                    : score >= 60
+                                    ? 'Good baseline fit. Review the identified skill gaps to boost interview chances.'
+                                    : 'Significant skills gap identified. Focus on the 7-day preparation roadmap below.'}
+                            </p>
                         </div>
-                    </div>
 
-                </aside>
+                        {/* Navigation Tabs */}
+                        <nav className="nav-menu">
+                            <span className="menu-label">Strategy Sections</span>
+
+                            <button
+                                type="button"
+                                className={`nav-menu-item ${activeTab === 'technical' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('technical')}
+                            >
+                                <Code size={16} className="menu-icon" />
+                                <span className="menu-text">Technical Questions</span>
+                                <span className="menu-badge">{report.technicalQuestions?.length || 0}</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`nav-menu-item ${activeTab === 'behavioral' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('behavioral')}
+                            >
+                                <MessageSquare size={16} className="menu-icon" />
+                                <span className="menu-text">Behavioral Questions</span>
+                                <span className="menu-badge">{report.behavioralQuestions?.length || 0}</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`nav-menu-item ${activeTab === 'roadmap' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('roadmap')}
+                            >
+                                <Calendar size={16} className="menu-icon" />
+                                <span className="menu-text">7-Day Prep Roadmap</span>
+                                <span className="menu-badge">{roadmapProgressPct}%</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`nav-menu-item ${activeTab === 'skillGaps' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('skillGaps')}
+                            >
+                                <AlertTriangle size={16} className="menu-icon" />
+                                <span className="menu-text">Identified Skill Gaps</span>
+                                <span className="menu-badge">{report.skillGaps?.length || 0}</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`nav-menu-item ${activeTab === 'resume' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('resume')}
+                            >
+                                <FileText size={16} className="menu-icon" />
+                                <span className="menu-text">ATS Resume Hub</span>
+                                <span className="menu-badge highlight-badge">PDF</span>
+                            </button>
+                        </nav>
+
+                        {/* Quick Resume CTA in sidebar */}
+                        <div className="sidebar-cta-card">
+                            <div className="cta-icon">
+                                <Sparkles size={18} />
+                            </div>
+                            <h4>Targeted ATS Resume</h4>
+                            <p>Includes keywords extracted from this specific job description.</p>
+                            <button
+                                type="button"
+                                onClick={() => getResumePdf(interviewId)}
+                                disabled={downloadingResume}
+                                className="button primary-button sidebar-cta-btn"
+                            >
+                                <Download size={14} />
+                                <span>Get Resume PDF</span>
+                            </button>
+                        </div>
+                    </aside>
+
+                    {/* ── Main Content Area ── */}
+                    <main className="interview-main-content">
+                        {/* ── Tab 1: Technical Questions ── */}
+                        {activeTab === 'technical' && (
+                            <section className="content-section">
+                                <div className="section-topbar">
+                                    <div>
+                                        <h2>Technical Interview Questions</h2>
+                                        <p className="section-desc">
+                                            Realistic questions tailored to this role's requirements, covering architectural trade-offs, algorithms, and deep domain knowledge.
+                                        </p>
+                                    </div>
+                                    <div className="search-input-box">
+                                        <Search size={15} />
+                                        <input
+                                            type="text"
+                                            placeholder="Search questions or keywords..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="cards-stack">
+                                    {filteredTechQuestions.map((q, idx) => {
+                                        const isOpen = openQuestions[`tech-${idx}`] ?? (idx === 0);
+                                        const isPracticed = practicedQuestions[`tech-${idx}`];
+
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className={`qa-card ${isPracticed ? 'qa-card--practiced' : ''}`}
+                                            >
+                                                <div
+                                                    className="qa-card-header"
+                                                    onClick={() => toggleQuestion(`tech-${idx}`)}
+                                                >
+                                                    <div className="qa-header-left">
+                                                        <span className="qa-num">Q{idx + 1}</span>
+                                                        <h3 className="qa-question-text">{q.question}</h3>
+                                                    </div>
+
+                                                    <div className="qa-header-right">
+                                                        <button
+                                                            type="button"
+                                                            className={`practice-check-btn ${isPracticed ? 'practiced' : ''}`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                togglePracticed(`tech-${idx}`);
+                                                            }}
+                                                            title={isPracticed ? "Marked as practiced" : "Mark as practiced"}
+                                                        >
+                                                            {isPracticed ? (
+                                                                <CheckCircle2 size={16} className="check-done" />
+                                                            ) : (
+                                                                <Circle size={16} />
+                                                            )}
+                                                            <span className="practice-label">
+                                                                {isPracticed ? 'Practiced' : 'Mark Practiced'}
+                                                            </span>
+                                                        </button>
+
+                                                        <span className="chevron-toggle">
+                                                            {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {isOpen && (
+                                                    <div className="qa-card-body">
+                                                        {/* Interviewer's Intention */}
+                                                        <div className="qa-block intention-block">
+                                                            <div className="block-label">
+                                                                <Zap size={14} />
+                                                                <span>Interviewer's Evaluation Goal</span>
+                                                            </div>
+                                                            <p className="block-content">{q.intention}</p>
+                                                        </div>
+
+                                                        {/* Model Answer */}
+                                                        <div className="qa-block answer-block">
+                                                            <div className="block-header">
+                                                                <div className="block-label">
+                                                                    <CheckCircle size={14} />
+                                                                    <span>Recommended Model Answer & Key Points</span>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    className="copy-btn"
+                                                                    onClick={() => handleCopy(q.answer, `tech-${idx}`)}
+                                                                >
+                                                                    {copiedIndex === `tech-${idx}` ? (
+                                                                        <>
+                                                                            <Check size={14} className="copied-icon" />
+                                                                            <span>Copied!</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <Copy size={14} />
+                                                                            <span>Copy Answer</span>
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                            </div>
+                                                            <div className="model-answer-text">
+                                                                {q.answer}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* ── Tab 2: Behavioral Questions ── */}
+                        {activeTab === 'behavioral' && (
+                            <section className="content-section">
+                                <div className="section-topbar">
+                                    <div>
+                                        <h2>Behavioral & Situational Questions</h2>
+                                        <p className="section-desc">
+                                            Role-specific behavioral scenarios designed to evaluate cross-functional collaboration, ownership, and conflict resolution using the STAR method.
+                                        </p>
+                                    </div>
+                                    <div className="search-input-box">
+                                        <Search size={15} />
+                                        <input
+                                            type="text"
+                                            placeholder="Search questions..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="cards-stack">
+                                    {filteredBehavioralQuestions.map((q, idx) => {
+                                        const isOpen = openQuestions[`beh-${idx}`] ?? (idx === 0);
+                                        const isPracticed = practicedQuestions[`beh-${idx}`];
+
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className={`qa-card ${isPracticed ? 'qa-card--practiced' : ''}`}
+                                            >
+                                                <div
+                                                    className="qa-card-header"
+                                                    onClick={() => toggleQuestion(`beh-${idx}`)}
+                                                >
+                                                    <div className="qa-header-left">
+                                                        <span className="qa-num qa-num--beh">B{idx + 1}</span>
+                                                        <h3 className="qa-question-text">{q.question}</h3>
+                                                    </div>
+
+                                                    <div className="qa-header-right">
+                                                        <button
+                                                            type="button"
+                                                            className={`practice-check-btn ${isPracticed ? 'practiced' : ''}`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                togglePracticed(`beh-${idx}`);
+                                                            }}
+                                                        >
+                                                            {isPracticed ? (
+                                                                <CheckCircle2 size={16} className="check-done" />
+                                                            ) : (
+                                                                <Circle size={16} />
+                                                            )}
+                                                            <span className="practice-label">
+                                                                {isPracticed ? 'Practiced' : 'Mark Practiced'}
+                                                            </span>
+                                                        </button>
+
+                                                        <span className="chevron-toggle">
+                                                            {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {isOpen && (
+                                                    <div className="qa-card-body">
+                                                        <div className="qa-block intention-block">
+                                                            <div className="block-label">
+                                                                <Zap size={14} />
+                                                                <span>Core Competency Evaluated</span>
+                                                            </div>
+                                                            <p className="block-content">{q.intention}</p>
+                                                        </div>
+
+                                                        <div className="qa-block answer-block">
+                                                            <div className="block-header">
+                                                                <div className="block-label">
+                                                                    <CheckCircle size={14} />
+                                                                    <span>STAR Structure (Situation, Task, Action, Result)</span>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    className="copy-btn"
+                                                                    onClick={() => handleCopy(q.answer, `beh-${idx}`)}
+                                                                >
+                                                                    {copiedIndex === `beh-${idx}` ? (
+                                                                        <>
+                                                                            <Check size={14} className="copied-icon" />
+                                                                            <span>Copied!</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <Copy size={14} />
+                                                                            <span>Copy Answer</span>
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                            </div>
+                                                            <div className="model-answer-text">
+                                                                {q.answer}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* ── Tab 3: 7-Day Roadmap ── */}
+                        {activeTab === 'roadmap' && (
+                            <section className="content-section">
+                                <div className="section-topbar">
+                                    <div>
+                                        <h2>7-Day Targeted Preparation Roadmap</h2>
+                                        <p className="section-desc">
+                                            A structured, day-by-day sprint to systematically close skill gaps, practice interview problems, and peak before your interview.
+                                        </p>
+                                    </div>
+                                    <div className="roadmap-progress-badge">
+                                        <span className="progress-text">{completedTasksCount} / {totalTasks} Tasks Completed</span>
+                                        <span className="progress-pct">{roadmapProgressPct}%</span>
+                                    </div>
+                                </div>
+
+                                <div className="roadmap-progress-bar-container">
+                                    <div
+                                        className="roadmap-progress-bar-fill"
+                                        style={{ width: `${roadmapProgressPct}%` }}
+                                    ></div>
+                                </div>
+
+                                <div className="roadmap-days-list">
+                                    {(report.preparationPlan || []).map((dayPlan, dayIdx) => (
+                                        <div key={dayPlan.day || dayIdx} className="roadmap-day-card">
+                                            <div className="day-header">
+                                                <div className="day-pill">
+                                                    <span>Day {dayPlan.day || dayIdx + 1}</span>
+                                                </div>
+                                                <h3 className="day-focus-title">{dayPlan.focus}</h3>
+                                            </div>
+
+                                            <div className="day-tasks-list">
+                                                {(dayPlan.tasks || []).map((task, taskIdx) => {
+                                                    const isChecked = !!completedTasks[`${dayIdx}-${taskIdx}`];
+
+                                                    return (
+                                                        <div
+                                                            key={taskIdx}
+                                                            className={`task-row ${isChecked ? 'task-row--done' : ''}`}
+                                                            onClick={() => toggleTask(dayIdx, taskIdx)}
+                                                        >
+                                                            <div className="task-checkbox">
+                                                                {isChecked ? (
+                                                                    <CheckCircle2 size={18} className="icon-checked" />
+                                                                ) : (
+                                                                    <Circle size={18} className="icon-unchecked" />
+                                                                )}
+                                                            </div>
+                                                            <span className="task-text">{task}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* ── Tab 4: Skill Gaps ── */}
+                        {activeTab === 'skillGaps' && (
+                            <section className="content-section">
+                                <div className="section-topbar">
+                                    <div>
+                                        <h2>Identified Skill Gaps & Deficiencies</h2>
+                                        <p className="section-desc">
+                                            Specific technologies, paradigms, or qualifications mentioned in the job description that were absent or understated in your profile.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="gaps-container">
+                                    {(report.skillGaps || []).map((gap, idx) => {
+                                        const severity = gap.severity?.toLowerCase() || 'medium';
+                                        const severityBadge =
+                                            severity === 'high' ? 'High Impact' :
+                                            severity === 'medium' ? 'Moderate' : 'Low Impact';
+
+                                        return (
+                                            <div key={idx} className={`gap-card gap-${severity}`}>
+                                                <div className="gap-top">
+                                                    <div className="gap-title-group">
+                                                        <AlertTriangle size={18} className="gap-icon" />
+                                                        <h3 className="gap-skill-name">{gap.skill}</h3>
+                                                    </div>
+                                                    <span className={`severity-tag severity-${severity}`}>
+                                                        {severityBadge}
+                                                    </span>
+                                                </div>
+
+                                                <p className="gap-advice">
+                                                    {severity === 'high'
+                                                        ? 'Critical qualification for this job. Likely to be heavily probed in technical rounds. Prioritize building a quick demo or deep-diving into syntax and fundamentals.'
+                                                        : severity === 'medium'
+                                                        ? 'Recommended competence. Expect conceptual questions or scenario testing around trade-offs.'
+                                                        : 'Secondary/nice-to-have skill. Familiarity with core concepts will be sufficient.'}
+                                                </p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* ── Tab 5: ATS Resume Hub ── */}
+                        {activeTab === 'resume' && (
+                            <section className="content-section resume-hub-section">
+                                <div className="section-topbar">
+                                    <div>
+                                        <h2>ATS-Compliant Resume Architect</h2>
+                                        <p className="section-desc">
+                                            A tailored resume generated by Groq AI designed to bypass automated Applicant Tracking Systems (ATS) while reading naturally to human hiring managers.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="resume-features-card">
+                                    <div className="features-grid">
+                                        <div className="feature-item">
+                                            <div className="feature-icon">
+                                                <CheckCircle size={18} />
+                                            </div>
+                                            <div>
+                                                <h4>Keyword Alignment</h4>
+                                                <p>Injected core skills and phrases directly from the target job description.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="feature-item">
+                                            <div className="feature-icon">
+                                                <CheckCircle size={18} />
+                                            </div>
+                                            <div>
+                                                <h4>Single / Two-Page ATS Format</h4>
+                                                <p>Semantic HTML hierarchy without tables or non-standard fonts that cause parser drops.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="feature-item">
+                                            <div className="feature-icon">
+                                                <CheckCircle size={18} />
+                                            </div>
+                                            <div>
+                                                <h4>Impact-Driven Bullet Points</h4>
+                                                <p>Formatted using action verbs and quantifiable metrics rather than generic duties.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="feature-item">
+                                            <div className="feature-icon">
+                                                <CheckCircle size={18} />
+                                            </div>
+                                            <div>
+                                                <h4>Puppeteer PDF Engine</h4>
+                                                <p>Direct vector PDF compilation ensures crisp text selection and print formatting.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="resume-download-box">
+                                        <div className="download-info">
+                                            <FileText size={32} className="pdf-icon" />
+                                            <div>
+                                                <h3>Tailored_Resume_{report.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'Job'}.pdf</h3>
+                                                <p>Standard A4 Print Dimensions • High-Resolution Vector Typography</p>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => getResumePdf(interviewId)}
+                                            disabled={downloadingResume}
+                                            className="button primary-button download-main-btn"
+                                        >
+                                            {downloadingResume ? (
+                                                <>
+                                                    <Loader2 size={18} className="animate-spin" />
+                                                    <span>Compiling PDF Document...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Download size={18} />
+                                                    <span>Download Tailored Resume PDF</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+                    </main>
+                </div>
             </div>
-        </div>
-    )
-}
+        </Layout>
+    );
+};
 
-export default Interview
+export default Interview;

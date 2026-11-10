@@ -1,151 +1,507 @@
-import React, { useState, useRef } from 'react'
-import "../style/home.scss"
-import { useInterview } from '../hooks/useInterview.js'
-import { useNavigate } from 'react-router'
+import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router';
+import { useInterview } from '../hooks/useInterview';
+import Layout from '../../../components/Layout';
+import {
+    Sparkles,
+    Briefcase,
+    FileText,
+    UploadCloud,
+    CheckCircle,
+    X,
+    AlertCircle,
+    ArrowRight,
+    Loader2,
+    Search,
+    Download,
+    Trash2,
+    TrendingUp,
+    Clock,
+    Zap,
+    ExternalLink
+} from 'lucide-react';
+import '../style/home.scss';
+
+// Pre-defined sample job descriptions for quick 1-click testing
+const SAMPLE_JDS = [
+    {
+        label: "Fullstack Engineer",
+        role: "Senior Fullstack Engineer (React & Node.js)",
+        text: `We are looking for a Senior Full Stack Engineer with 4+ years of experience in React, TypeScript, Node.js, Express, and MongoDB or PostgreSQL. The ideal candidate will design scalable RESTful and GraphQL APIs, optimize frontend web performance, implement robust JWT authentication, containerize microservices using Docker, and collaborate on CI/CD pipelines. Strong understanding of system design, caching strategies (Redis), and automated unit/integration testing (Jest/Playwright) is required.`
+    },
+    {
+        label: "Frontend Specialist",
+        role: "Frontend Engineer (React / Next.js)",
+        text: `Seeking a skilled Frontend Engineer proficient in modern React, Next.js (App Router), TypeScript, Tailwind CSS, and state management (Zustand or Redux Toolkit). You will be responsible for creating pixel-perfect, accessible (WCAG AA), responsive UIs, optimizing Core Web Vitals, and integrating REST/WebSocket APIs. Experience with SSR/SSG, testing with React Testing Library, and headless CMS integrations is highly preferred.`
+    },
+    {
+        label: "Backend Engineer",
+        role: "Backend Engineer (Node.js & Cloud)",
+        text: `We are hiring a Backend Engineer to build distributed backend systems capable of processing millions of events daily. Requirements include deep proficiency in Node.js/TypeScript, relational & NoSQL databases (MongoDB, PostgreSQL), message brokers (RabbitMQ/Kafka), AWS services (S3, Lambda, ECS), and API security. You will write clean, well-documented, test-driven code and participate in on-call rotations.`
+    }
+];
 
 const Home = () => {
+    const {
+        loading,
+        generateReport,
+        reports,
+        getResumePdf,
+        downloadingResume,
+        handleDeleteReport
+    } = useInterview();
 
-    const { loading, generateReport,reports } = useInterview()
-    const [ jobDescription, setJobDescription ] = useState("")
-    const [ selfDescription, setSelfDescription ] = useState("")
-    const resumeInputRef = useRef()
+    const navigate = useNavigate();
 
-    const navigate = useNavigate()
+    const [jobDescription, setJobDescription] = useState('');
+    const [selfDescription, setSelfDescription] = useState('');
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [dragActive, setDragActive] = useState(false);
+    const [validationError, setValidationError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [activeDeletingId, setActiveDeletingId] = useState(null);
+    const [activeDownloadingId, setActiveDownloadingId] = useState(null);
 
-    const handleGenerateReport = async () => {
-        const resumeFile = resumeInputRef.current.files[ 0 ]
-        const data = await generateReport({ jobDescription, selfDescription, resumeFile })
-        navigate(`/interview/${data._id}`)
-    }
+    const fileInputRef = useRef(null);
 
-    if (loading) {
-        return (
-            <main className='loading-screen'>
-                <h1>Loading your interview plan...</h1>
-            </main>
-        )
-    }
+    // Drag and drop handlers
+    const handleDrag = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.type === 'dragenter' || e.type === 'dragover') {
+            setDragActive(true);
+        } else if (e.type === 'dragleave') {
+            setDragActive(false);
+        }
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragActive(false);
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            validateAndSetFile(e.dataTransfer.files[0]);
+        }
+    };
+
+    const handleFileInputChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            validateAndSetFile(e.target.files[0]);
+        }
+    };
+
+    const validateAndSetFile = (file) => {
+        setValidationError('');
+        if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+            setValidationError('Only PDF resumes are supported. Please upload a .pdf file.');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setValidationError('File size exceeds the 5MB limit. Please upload a smaller file.');
+            return;
+        }
+        setSelectedFile(file);
+    };
+
+    const handleRemoveFile = () => {
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleLoadSample = (sample) => {
+        setJobDescription(sample.text);
+        setValidationError('');
+    };
+
+    const handleGenerate = async () => {
+        setValidationError('');
+        if (!jobDescription.trim()) {
+            setValidationError('Please paste a target Job Description to begin analysis.');
+            return;
+        }
+        if (!selectedFile && !selfDescription.trim()) {
+            setValidationError('Please upload a PDF resume or provide your experience in the self-description.');
+            return;
+        }
+
+        try {
+            const data = await generateReport({
+                jobDescription,
+                selfDescription,
+                resumeFile: selectedFile
+            });
+            if (data?._id) {
+                navigate(`/interview/${data._id}`);
+            }
+        } catch (err) {
+            setValidationError(err.response?.data?.message || 'Failed to generate interview report. Please try again.');
+        }
+    };
+
+    const onDownloadResume = async (e, reportId) => {
+        e.stopPropagation();
+        setActiveDownloadingId(reportId);
+        try {
+            await getResumePdf(reportId);
+        } catch (err) {
+            console.error('Download error:', err);
+        } finally {
+            setActiveDownloadingId(null);
+        }
+    };
+
+    const onDelete = async (e, reportId) => {
+        e.stopPropagation();
+        if (window.confirm('Are you sure you want to delete this interview report?')) {
+            setActiveDeletingId(reportId);
+            try {
+                await handleDeleteReport(reportId);
+            } catch (err) {
+                console.error('Delete error:', err);
+            } finally {
+                setActiveDeletingId(null);
+            }
+        }
+    };
+
+    // Filter reports
+    const filteredReports = reports.filter(r =>
+        (r.title || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const averageMatch = reports.length > 0
+        ? Math.round(reports.reduce((acc, curr) => acc + (curr.matchScore || 0), 0) / reports.length)
+        : 0;
 
     return (
-        <div className='home-page'>
-
-            {/* Page Header */}
-            <header className='page-header'>
-                <h1>Create Your Custom <span className='highlight'>Interview Plan</span></h1>
-                <p>Let our AI analyze the job requirements and your unique profile to build a winning strategy.</p>
-            </header>
-
-            {/* Main Card */}
-            <div className='interview-card'>
-                <div className='interview-card__body'>
-
-                    {/* Left Panel - Job Description */}
-                    <div className='panel panel--left'>
-                        <div className='panel__header'>
-                            <span className='panel__icon'>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>
-                            </span>
-                            <h2>Target Job Description</h2>
-                            <span className='badge badge--required'>Required</span>
-                        </div>
-                        <textarea
-                            onChange={(e) => { setJobDescription(e.target.value) }}
-                            className='panel__textarea'
-                            placeholder={`Paste the full job description here...\ne.g. 'Senior Frontend Engineer at Google requires proficiency in React, TypeScript, and large-scale system design...'`}
-                            maxLength={5000}
-                        />
-                        <div className='char-counter'>0 / 5000 chars</div>
+        <Layout>
+            <div className="home-dashboard">
+                {/* Hero Header */}
+                <header className="hero-banner">
+                    <div className="hero-badge">
+                        <Zap size={14} className="badge-icon" />
+                        <span>High-Speed Groq Llama 3.3 Engine</span>
                     </div>
+                    <h1>
+                        Identify Skill Gaps. Master the Interview.<br />
+                        Generate <span className="gradient-text">ATS-Proof Resumes</span>.
+                    </h1>
+                    <p className="hero-subtitle">
+                        Paste any job description and benchmark your background. Get actionable gap analysis,
+                        a 7-day preparation roadmap with real interview questions, and a customized ATS-tailored resume.
+                    </p>
 
-                    {/* Vertical Divider */}
-                    <div className='panel-divider' />
-
-                    {/* Right Panel - Profile */}
-                    <div className='panel panel--right'>
-                        <div className='panel__header'>
-                            <span className='panel__icon'>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                            </span>
-                            <h2>Your Profile</h2>
+                    {/* Quick Stats Banner */}
+                    <div className="hero-stats">
+                        <div className="stat-card">
+                            <span className="stat-value">{reports.length}</span>
+                            <span className="stat-label">Analyses Saved</span>
                         </div>
-
-                        {/* Upload Resume */}
-                        <div className='upload-section'>
-                            <label className='section-label'>
-                                Upload Resume
-                                <span className='badge badge--best'>Best Results</span>
-                            </label>
-                            <label className='dropzone' htmlFor='resume'>
-                                <span className='dropzone__icon'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>
-                                </span>
-                                <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
-                                <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
-                                <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' />
-                            </label>
+                        <div className="stat-divider"></div>
+                        <div className="stat-card">
+                            <span className="stat-value">{averageMatch}%</span>
+                            <span className="stat-label">Avg. Match Score</span>
                         </div>
-
-                        {/* OR Divider */}
-                        <div className='or-divider'><span>OR</span></div>
-
-                        {/* Quick Self-Description */}
-                        <div className='self-description'>
-                            <label className='section-label' htmlFor='selfDescription'>Quick Self-Description</label>
-                            <textarea
-                                onChange={(e) => { setSelfDescription(e.target.value) }}
-                                id='selfDescription'
-                                name='selfDescription'
-                                className='panel__textarea panel__textarea--short'
-                                placeholder="Briefly describe your experience, key skills, and years of experience if you don't have a resume handy..."
-                            />
-                        </div>
-
-                        {/* Info Box */}
-                        <div className='info-box'>
-                            <span className='info-box__icon'>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" stroke="#1a1f27" strokeWidth="2" /><line x1="12" y1="16" x2="12.01" y2="16" stroke="#1a1f27" strokeWidth="2" /></svg>
-                            </span>
-                            <p>Either a <strong>Resume</strong> or a <strong>Self Description</strong> is required to generate a personalized plan.</p>
+                        <div className="stat-divider"></div>
+                        <div className="stat-card">
+                            <span className="stat-value">~10s</span>
+                            <span className="stat-label">Groq AI Inference</span>
                         </div>
                     </div>
-                </div>
+                </header>
 
-                {/* Card Footer */}
-                <div className='interview-card__footer'>
-                    <span className='footer-info'>AI-Powered Strategy Generation &bull; Approx 30s</span>
-                    <button
-                        onClick={handleGenerateReport}
-                        className='generate-btn'>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" /></svg>
-                        Generate My Interview Strategy
-                    </button>
-                </div>
-            </div>
+                {/* Main Workspace Card */}
+                <section className="workspace-card" id="job-description">
+                    {/* Workspace Header */}
+                    <div className="workspace-header">
+                        <div className="header-title">
+                            <Briefcase size={20} className="icon-blue" />
+                            <h2>New Career Gap Analysis & Resume Architect</h2>
+                        </div>
+                        {/* Sample Quick-fill buttons */}
+                        <div className="sample-presets">
+                            <span className="preset-label">Quick Test:</span>
+                            {SAMPLE_JDS.map((sample, idx) => (
+                                <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => handleLoadSample(sample)}
+                                    className="preset-btn"
+                                >
+                                    + {sample.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
-            {/* Recent Reports List */}
-            {reports.length > 0 && (
-                <section className='recent-reports'>
-                    <h2>My Recent Interview Plans</h2>
-                    <ul className='reports-list'>
-                        {reports.map(report => (
-                            <li key={report._id} className='report-item' onClick={() => navigate(`/interview/${report._id}`)}>
-                                <h3>{report.title || 'Untitled Position'}</h3>
-                                <p className='report-meta'>Generated on {new Date(report.createdAt).toLocaleDateString()}</p>
-                                <p className={`match-score ${report.matchScore >= 80 ? 'score--high' : report.matchScore >= 60 ? 'score--mid' : 'score--low'}`}>Match Score: {report.matchScore}%</p>
-                            </li>
-                        ))}
-                    </ul>
+                    {/* Error Banner */}
+                    {validationError && (
+                        <div className="validation-alert">
+                            <AlertCircle size={18} />
+                            <span>{validationError}</span>
+                        </div>
+                    )}
+
+                    {/* Split Input Grid */}
+                    <div className="workspace-grid">
+                        {/* Left Column: Target Job Description */}
+                        <div className="grid-col col-left">
+                            <div className="col-header">
+                                <label htmlFor="jd-textarea">Target Job Description</label>
+                                <span className="badge badge-required">Required</span>
+                            </div>
+                            <div className="textarea-container">
+                                <textarea
+                                    id="jd-textarea"
+                                    value={jobDescription}
+                                    onChange={(e) => setJobDescription(e.target.value)}
+                                    placeholder={`Paste the complete job description here...\n\nExample:\n• Requirements & Tech Stack (React, Node.js, AWS, etc.)\n• Roles & Responsibilities\n• Desired seniority level`}
+                                    maxLength={5000}
+                                />
+                                <div className="char-badge">
+                                    {jobDescription.length} / 5000 chars
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Middle Vertical Divider */}
+                        <div className="grid-divider"></div>
+
+                        {/* Right Column: Candidate Profile & Resume */}
+                        <div className="grid-col col-right">
+                            <div className="col-header">
+                                <label>Your Candidate Profile</label>
+                                <span className="badge badge-recommended">PDF for Best ATS Fit</span>
+                            </div>
+
+                            {/* Dropzone or Uploaded File Preview */}
+                            {!selectedFile ? (
+                                <div
+                                    className={`dropzone ${dragActive ? 'dropzone--active' : ''}`}
+                                    onDragEnter={handleDrag}
+                                    onDragLeave={handleDrag}
+                                    onDragOver={handleDrag}
+                                    onDrop={handleDrop}
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept=".pdf,application/pdf"
+                                        onChange={handleFileInputChange}
+                                        style={{ display: 'none' }}
+                                    />
+                                    <div className="dropzone-icon">
+                                        <UploadCloud size={32} />
+                                    </div>
+                                    <p className="dropzone-title">Upload your current Resume (PDF)</p>
+                                    <p className="dropzone-sub">Drag & drop here or browse from computer (Max 5MB)</p>
+                                </div>
+                            ) : (
+                                <div className="uploaded-file-card">
+                                    <div className="file-info">
+                                        <div className="file-icon">
+                                            <FileText size={24} />
+                                        </div>
+                                        <div className="file-meta">
+                                            <span className="file-name">{selectedFile.name}</span>
+                                            <span className="file-size">
+                                                {(selectedFile.size / 1024).toFixed(1)} KB • Ready for AI extraction
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveFile}
+                                        className="remove-file-btn"
+                                        title="Remove file"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* OR Divider */}
+                            <div className="or-separator">
+                                <span>OR ADD SUPPLEMENTARY DETAILS</span>
+                            </div>
+
+                            {/* Self Description Input */}
+                            <div className="self-desc-container">
+                                <label htmlFor="self-description" className="sub-label">
+                                    Quick Summary / Additional Highlights
+                                </label>
+                                <textarea
+                                    id="self-description"
+                                    value={selfDescription}
+                                    onChange={(e) => setSelfDescription(e.target.value)}
+                                    placeholder="Add any extra projects, years of experience, or skills not listed in your resume..."
+                                    rows={3}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Workspace Footer Action Bar */}
+                    <div className="workspace-footer">
+                        <div className="footer-tip">
+                            <CheckCircle size={15} className="tip-icon" />
+                            <span>ATS-tailored resume PDF automatically created with report</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleGenerate}
+                            disabled={loading}
+                            className="button primary-button generate-btn"
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    <span>Groq AI Generating Strategy...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles size={18} />
+                                    <span>Run Gap Analysis & Build Resume</span>
+                                    <ArrowRight size={16} />
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </section>
-            )}
 
-            {/* Page Footer */}
-            <footer className='page-footer'>
-                <a href='#'>Privacy Policy</a>
-                <a href='#'>Terms of Service</a>
-                <a href='#'>Help Center</a>
-            </footer>
-        </div>
-    )
-}
+                {/* Saved Reports / History Section */}
+                <section className="saved-reports-section" id="recent-reports">
+                    <div className="section-header">
+                        <div className="header-left">
+                            <FileText size={22} className="icon-blue" />
+                            <div>
+                                <h2>My Saved Interview Analyses & Resumes</h2>
+                                <p className="section-subtitle">
+                                    Access your previous job match evaluations, preparation roadmaps, and download tailored resumes.
+                                </p>
+                            </div>
+                        </div>
 
-export default Home
+                        {/* Search Filter */}
+                        {reports.length > 0 && (
+                            <div className="search-bar">
+                                <Search size={16} className="search-icon" />
+                                <input
+                                    type="text"
+                                    placeholder="Search by job title..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                {searchTerm && (
+                                    <button
+                                        onClick={() => setSearchTerm('')}
+                                        className="clear-search"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Reports Grid */}
+                    {reports.length === 0 ? (
+                        <div className="empty-reports-card">
+                            <Briefcase size={40} className="empty-icon" />
+                            <h3>No Analyses Generated Yet</h3>
+                            <p>
+                                Paste a target job description and upload your resume above to create your first comprehensive
+                                interview prep strategy and ATS-friendly resume!
+                            </p>
+                        </div>
+                    ) : filteredReports.length === 0 ? (
+                        <div className="empty-search-card">
+                            <p>No reports match "<strong>{searchTerm}</strong>"</p>
+                            <button onClick={() => setSearchTerm('')} className="button secondary-button">
+                                Clear Search
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="reports-grid">
+                            {filteredReports.map((reportItem) => {
+                                const score = reportItem.matchScore ?? 0;
+                                const scoreClass =
+                                    score >= 80 ? 'score-high' :
+                                    score >= 60 ? 'score-mid' : 'score-low';
+
+                                return (
+                                    <div
+                                        key={reportItem._id}
+                                        className="report-card"
+                                        onClick={() => navigate(`/interview/${reportItem._id}`)}
+                                    >
+                                        <div className="card-top">
+                                            <div className="title-area">
+                                                <h3 className="report-title">{reportItem.title || 'Untitled Target Position'}</h3>
+                                                <div className="report-meta">
+                                                    <Clock size={13} />
+                                                    <span>{new Date(reportItem.createdAt).toLocaleDateString(undefined, {
+                                                        year: 'numeric',
+                                                        month: 'short',
+                                                        day: 'numeric'
+                                                    })}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Match Score Badge */}
+                                            <div className={`score-badge ${scoreClass}`} title="Profile Match Rate">
+                                                <span className="score-num">{score}%</span>
+                                                <span className="score-text">Match</span>
+                                            </div>
+                                        </div>
+
+                                        <p className="card-hint">
+                                            Click to review technical questions, STAR behavioral responses, and day-by-day roadmap.
+                                        </p>
+
+                                        {/* Card Actions */}
+                                        <div className="card-actions">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => onDownloadResume(e, reportItem._id)}
+                                                disabled={activeDownloadingId === reportItem._id}
+                                                className="action-btn download-btn"
+                                                title="Download ATS-Optimized Resume PDF"
+                                            >
+                                                {activeDownloadingId === reportItem._id ? (
+                                                    <Loader2 size={14} className="animate-spin" />
+                                                ) : (
+                                                    <Download size={14} />
+                                                )}
+                                                <span>{activeDownloadingId === reportItem._id ? 'Generating PDF...' : 'Download Resume'}</span>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={(e) => onDelete(e, reportItem._id)}
+                                                disabled={activeDeletingId === reportItem._id}
+                                                className="action-btn delete-btn"
+                                                title="Delete this analysis"
+                                            >
+                                                {activeDeletingId === reportItem._id ? (
+                                                    <Loader2 size={14} className="animate-spin" />
+                                                ) : (
+                                                    <Trash2 size={14} />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </section>
+            </div>
+        </Layout>
+    );
+};
+
+export default Home;
