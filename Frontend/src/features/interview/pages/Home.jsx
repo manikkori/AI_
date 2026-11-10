@@ -1,43 +1,47 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { useInterview } from '../hooks/useInterview';
+import { useAuth } from '../../auth/hooks/useAuth';
 import Layout from '../../../components/Layout';
 import {
     Sparkles,
-    Briefcase,
-    FileText,
     UploadCloud,
-    CheckCircle,
+    FileText,
     X,
-    AlertCircle,
-    ArrowRight,
+    ArrowUpRight,
     Loader2,
-    Search,
+    CheckCircle2,
+    Clock,
     Download,
     Trash2,
-    TrendingUp,
-    Clock,
-    Zap,
-    ExternalLink
+    Search,
+    AlertCircle,
+    Cpu,
+    Target,
+    Layers,
+    FileCode
 } from 'lucide-react';
-import '../style/home.scss';
 
-// Pre-defined sample job descriptions for quick 1-click testing
-const SAMPLE_JDS = [
+const PRESET_ROLES = [
     {
-        label: "Fullstack Engineer",
-        role: "Senior Fullstack Engineer (React & Node.js)",
-        text: `We are looking for a Senior Full Stack Engineer with 4+ years of experience in React, TypeScript, Node.js, Express, and MongoDB or PostgreSQL. The ideal candidate will design scalable RESTful and GraphQL APIs, optimize frontend web performance, implement robust JWT authentication, containerize microservices using Docker, and collaborate on CI/CD pipelines. Strong understanding of system design, caching strategies (Redis), and automated unit/integration testing (Jest/Playwright) is required.`
+        name: "Fullstack Eng",
+        title: "Senior Full Stack Engineer (React + Node)",
+        text: `We are looking for a Senior Full Stack Engineer proficient in React, TypeScript, Node.js, Express, and MongoDB/PostgreSQL. Responsibilities include building scalable REST and GraphQL APIs, optimizing client-side performance, implementing robust JWT authentication, containerization with Docker, and designing event-driven microservices.`
     },
     {
-        label: "Frontend Specialist",
-        role: "Frontend Engineer (React / Next.js)",
-        text: `Seeking a skilled Frontend Engineer proficient in modern React, Next.js (App Router), TypeScript, Tailwind CSS, and state management (Zustand or Redux Toolkit). You will be responsible for creating pixel-perfect, accessible (WCAG AA), responsive UIs, optimizing Core Web Vitals, and integrating REST/WebSocket APIs. Experience with SSR/SSG, testing with React Testing Library, and headless CMS integrations is highly preferred.`
+        name: "Frontend React",
+        title: "Lead Frontend Engineer (React/Next.js)",
+        text: `Seeking a Lead Frontend Engineer with deep expertise in modern React 19, Next.js App Router, TypeScript, Tailwind CSS, and state management (Zustand/Redux). You will lead component architecture, Core Web Vitals optimization, accessibility (WCAG AA), and headless API integration.`
     },
     {
-        label: "Backend Engineer",
-        role: "Backend Engineer (Node.js & Cloud)",
-        text: `We are hiring a Backend Engineer to build distributed backend systems capable of processing millions of events daily. Requirements include deep proficiency in Node.js/TypeScript, relational & NoSQL databases (MongoDB, PostgreSQL), message brokers (RabbitMQ/Kafka), AWS services (S3, Lambda, ECS), and API security. You will write clean, well-documented, test-driven code and participate in on-call rotations.`
+        name: "Backend Cloud",
+        title: "Backend Platform Engineer (Node.js/AWS)",
+        text: `Hiring a Backend Platform Engineer to architect high-throughput distributed systems. Requirements include Node.js, TypeScript, PostgreSQL, Redis caching, message brokers (Kafka/RabbitMQ), and AWS cloud services (S3, Lambda, ECS) with test-driven development.`
+    },
+    {
+        name: "System Design",
+        title: "Staff Software Architect",
+        text: `Looking for a Software Architect to drive technical strategy across distributed microservices, database sharding, fault tolerance, API gateways, low-latency caching, CI/CD observability, and cross-team engineering standards.`
     }
 ];
 
@@ -47,20 +51,21 @@ const Home = () => {
         generateReport,
         reports,
         getResumePdf,
-        downloadingResume,
         handleDeleteReport
     } = useInterview();
 
+    const { user } = useAuth();
     const navigate = useNavigate();
 
     const [jobDescription, setJobDescription] = useState('');
     const [selfDescription, setSelfDescription] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
     const [dragActive, setDragActive] = useState(false);
-    const [validationError, setValidationError] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeDeletingId, setActiveDeletingId] = useState(null);
-    const [activeDownloadingId, setActiveDownloadingId] = useState(null);
+    const [downloadingId, setDownloadingId] = useState(null);
+    const [deletingId, setDeletingId] = useState(null);
+    const [showSelfDesc, setShowSelfDesc] = useState(false);
 
     const fileInputRef = useRef(null);
 
@@ -68,11 +73,8 @@ const Home = () => {
     const handleDrag = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (e.type === 'dragenter' || e.type === 'dragover') {
-            setDragActive(true);
-        } else if (e.type === 'dragleave') {
-            setDragActive(false);
-        }
+        if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
+        else if (e.type === 'dragleave') setDragActive(false);
     };
 
     const handleDrop = (e) => {
@@ -80,24 +82,18 @@ const Home = () => {
         e.stopPropagation();
         setDragActive(false);
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            validateAndSetFile(e.dataTransfer.files[0]);
+            handleValidateFile(e.dataTransfer.files[0]);
         }
     };
 
-    const handleFileInputChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            validateAndSetFile(e.target.files[0]);
-        }
-    };
-
-    const validateAndSetFile = (file) => {
-        setValidationError('');
+    const handleValidateFile = (file) => {
+        setErrorMsg('');
         if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-            setValidationError('Only PDF resumes are supported. Please upload a .pdf file.');
+            setErrorMsg('Only PDF resumes are supported. Please upload a .pdf file.');
             return;
         }
         if (file.size > 5 * 1024 * 1024) {
-            setValidationError('File size exceeds the 5MB limit. Please upload a smaller file.');
+            setErrorMsg('File size exceeds the 5MB limit.');
             return;
         }
         setSelectedFile(file);
@@ -105,24 +101,22 @@ const Home = () => {
 
     const handleRemoveFile = () => {
         setSelectedFile(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const handleLoadSample = (sample) => {
-        setJobDescription(sample.text);
-        setValidationError('');
+    const handleSelectPreset = (preset) => {
+        setJobDescription(preset.text);
+        setErrorMsg('');
     };
 
     const handleGenerate = async () => {
-        setValidationError('');
+        setErrorMsg('');
         if (!jobDescription.trim()) {
-            setValidationError('Please paste a target Job Description to begin analysis.');
+            setErrorMsg('Please paste a target Job Description to benchmark against.');
             return;
         }
         if (!selectedFile && !selfDescription.trim()) {
-            setValidationError('Please upload a PDF resume or provide your experience in the self-description.');
+            setErrorMsg('Please upload a PDF resume or type your experience highlights.');
             return;
         }
 
@@ -136,362 +130,417 @@ const Home = () => {
                 navigate(`/interview/${data._id}`);
             }
         } catch (err) {
-            setValidationError(err.response?.data?.message || 'Failed to generate interview report. Please try again.');
+            setErrorMsg(err.response?.data?.message || 'Failed to generate report. Please try again.');
         }
     };
 
-    const onDownloadResume = async (e, reportId) => {
+    const onDownloadResume = async (e, id) => {
         e.stopPropagation();
-        setActiveDownloadingId(reportId);
+        setDownloadingId(id);
         try {
-            await getResumePdf(reportId);
+            await getResumePdf(id);
         } catch (err) {
             console.error('Download error:', err);
         } finally {
-            setActiveDownloadingId(null);
+            setDownloadingId(null);
         }
     };
 
-    const onDelete = async (e, reportId) => {
+    const onDeleteReport = async (e, id) => {
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to delete this interview report?')) {
-            setActiveDeletingId(reportId);
+        if (window.confirm('Are you sure you want to delete this report?')) {
+            setDeletingId(id);
             try {
-                await handleDeleteReport(reportId);
+                await handleDeleteReport(id);
             } catch (err) {
                 console.error('Delete error:', err);
             } finally {
-                setActiveDeletingId(null);
+                setDeletingId(null);
             }
         }
     };
 
-    // Filter reports
     const filteredReports = reports.filter(r =>
         (r.title || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const averageMatch = reports.length > 0
-        ? Math.round(reports.reduce((acc, curr) => acc + (curr.matchScore || 0), 0) / reports.length)
-        : 0;
-
     return (
         <Layout>
-            <div className="home-dashboard">
-                {/* Hero Header */}
-                <header className="hero-banner">
-                    <div className="hero-badge">
-                        <Zap size={14} className="badge-icon" />
-                        <span>High-Speed Groq Llama 3.3 Engine</span>
-                    </div>
-                    <h1>
-                        Identify Skill Gaps. Master the Interview.<br />
-                        Generate <span className="gradient-text">ATS-Proof Resumes</span>.
-                    </h1>
-                    <p className="hero-subtitle">
-                        Paste any job description and benchmark your background. Get actionable gap analysis,
-                        a 7-day preparation roadmap with real interview questions, and a customized ATS-tailored resume.
-                    </p>
-
-                    {/* Quick Stats Banner */}
-                    <div className="hero-stats">
-                        <div className="stat-card">
-                            <span className="stat-value">{reports.length}</span>
-                            <span className="stat-label">Analyses Saved</span>
-                        </div>
-                        <div className="stat-divider"></div>
-                        <div className="stat-card">
-                            <span className="stat-value">{averageMatch}%</span>
-                            <span className="stat-label">Avg. Match Score</span>
-                        </div>
-                        <div className="stat-divider"></div>
-                        <div className="stat-card">
-                            <span className="stat-value">~10s</span>
-                            <span className="stat-label">Groq AI Inference</span>
-                        </div>
-                    </div>
-                </header>
-
-                {/* Main Workspace Card */}
-                <section className="workspace-card" id="job-description">
-                    {/* Workspace Header */}
-                    <div className="workspace-header">
-                        <div className="header-title">
-                            <Briefcase size={20} className="icon-blue" />
-                            <h2>New Career Gap Analysis & Resume Architect</h2>
-                        </div>
-                        {/* Sample Quick-fill buttons */}
-                        <div className="sample-presets">
-                            <span className="preset-label">Quick Test:</span>
-                            {SAMPLE_JDS.map((sample, idx) => (
-                                <button
-                                    key={idx}
-                                    type="button"
-                                    onClick={() => handleLoadSample(sample)}
-                                    className="preset-btn"
-                                >
-                                    + {sample.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Error Banner */}
-                    {validationError && (
-                        <div className="validation-alert">
-                            <AlertCircle size={18} />
-                            <span>{validationError}</span>
-                        </div>
-                    )}
-
-                    {/* Split Input Grid */}
-                    <div className="workspace-grid">
-                        {/* Left Column: Target Job Description */}
-                        <div className="grid-col col-left">
-                            <div className="col-header">
-                                <label htmlFor="jd-textarea">Target Job Description</label>
-                                <span className="badge badge-required">Required</span>
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-8 flex flex-col gap-10">
+                {/* ── Main Bento Grid: Left Column + Right Column ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                    {/* ── Left Column: Candidate & Resume Profile Pod (Directly modeled after reference card) ── */}
+                    <div className="lg:col-span-4 bg-[#121214] border border-white/5 rounded-3xl p-6 sm:p-7 flex flex-col justify-between gap-6 shadow-2xl relative overflow-hidden">
+                        {/* Top: Brand mark + Live Availability Badge */}
+                        <div className="flex items-center justify-between">
+                            <div className="w-7 h-7 rounded-lg bg-neutral-900 border border-white/10 flex items-center justify-center text-orange-500">
+                                <Sparkles size={14} />
                             </div>
-                            <div className="textarea-container">
-                                <textarea
-                                    id="jd-textarea"
-                                    value={jobDescription}
-                                    onChange={(e) => setJobDescription(e.target.value)}
-                                    placeholder={`Paste the complete job description here...\n\nExample:\n• Requirements & Tech Stack (React, Node.js, AWS, etc.)\n• Roles & Responsibilities\n• Desired seniority level`}
-                                    maxLength={5000}
-                                />
-                                <div className="char-badge">
-                                    {jobDescription.length} / 5000 chars
-                                </div>
+                            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[11px] text-neutral-300">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>ATS Analyzer Active</span>
                             </div>
                         </div>
 
-                        {/* Middle Vertical Divider */}
-                        <div className="grid-divider"></div>
+                        {/* Center Visual Frame: Glowing Amber/Coral Lighting (Like reference image portrait frame) */}
+                        <div className="w-full rounded-2xl bg-gradient-to-br from-[#e03816] via-[#b32607] to-[#1c0804] p-6 relative overflow-hidden shadow-2xl border border-orange-500/30 flex flex-col justify-between min-h-[260px]">
+                            {/* Ambient flare */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-400/30 rounded-full blur-2xl pointer-events-none"></div>
 
-                        {/* Right Column: Candidate Profile & Resume */}
-                        <div className="grid-col col-right">
-                            <div className="col-header">
-                                <label>Your Candidate Profile</label>
-                                <span className="badge badge-recommended">PDF for Best ATS Fit</span>
+                            <div className="relative z-10">
+                                <span className="text-[11px] font-mono tracking-widest text-orange-200 uppercase opacity-90">
+                                    • Candidate Profile Matrix
+                                </span>
+                                <h3 className="text-2xl font-bold tracking-tight text-white mt-1">
+                                    {user?.username ? user.username : "Your Career"}
+                                </h3>
+                                <p className="text-xs text-orange-100/80 mt-1 font-light">
+                                    Targeting High-Growth Engineering Roles
+                                </p>
                             </div>
 
-                            {/* Dropzone or Uploaded File Preview */}
-                            {!selectedFile ? (
-                                <div
-                                    className={`dropzone ${dragActive ? 'dropzone--active' : ''}`}
-                                    onDragEnter={handleDrag}
-                                    onDragLeave={handleDrag}
-                                    onDragOver={handleDrag}
-                                    onDrop={handleDrop}
-                                    onClick={() => fileInputRef.current?.click()}
-                                >
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept=".pdf,application/pdf"
-                                        onChange={handleFileInputChange}
-                                        style={{ display: 'none' }}
-                                    />
-                                    <div className="dropzone-icon">
-                                        <UploadCloud size={32} />
-                                    </div>
-                                    <p className="dropzone-title">Upload your current Resume (PDF)</p>
-                                    <p className="dropzone-sub">Drag & drop here or browse from computer (Max 5MB)</p>
-                                </div>
-                            ) : (
-                                <div className="uploaded-file-card">
-                                    <div className="file-info">
-                                        <div className="file-icon">
-                                            <FileText size={24} />
-                                        </div>
-                                        <div className="file-meta">
-                                            <span className="file-name">{selectedFile.name}</span>
-                                            <span className="file-size">
-                                                {(selectedFile.size / 1024).toFixed(1)} KB • Ready for AI extraction
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={handleRemoveFile}
-                                        className="remove-file-btn"
-                                        title="Remove file"
+                            {/* Dropzone inside or overlay */}
+                            <div className="relative z-10 mt-4">
+                                {!selectedFile ? (
+                                    <div
+                                        onDragEnter={handleDrag}
+                                        onDragLeave={handleDrag}
+                                        onDragOver={handleDrag}
+                                        onDrop={handleDrop}
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className={`w-full py-4 px-3 rounded-xl border border-white/30 bg-black/40 backdrop-blur-md cursor-pointer transition-all flex flex-col items-center justify-center text-center ${
+                                            dragActive ? 'bg-black/60 border-white ring-2 ring-white/50' : 'hover:bg-black/50'
+                                        }`}
                                     >
-                                        <X size={18} />
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* OR Divider */}
-                            <div className="or-separator">
-                                <span>OR ADD SUPPLEMENTARY DETAILS</span>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept=".pdf,application/pdf"
+                                            onChange={(e) => e.target.files?.[0] && handleValidateFile(e.target.files[0])}
+                                            className="hidden"
+                                        />
+                                        <UploadCloud size={22} className="text-orange-300 mb-1" />
+                                        <span className="text-xs font-semibold text-white">
+                                            Drop PDF Resume Here
+                                        </span>
+                                        <span className="text-[10px] text-orange-200/80 mt-0.5">
+                                            Max 5MB • Instant Vector Parsing
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="w-full p-3 rounded-xl border border-emerald-500/40 bg-black/60 backdrop-blur-md flex items-center justify-between">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <FileText size={20} className="text-emerald-400 shrink-0" />
+                                            <div className="truncate">
+                                                <p className="text-xs font-semibold text-white truncate">
+                                                    {selectedFile.name}
+                                                </p>
+                                                <p className="text-[10px] text-emerald-300 font-mono">
+                                                    {(selectedFile.size / 1024).toFixed(0)} KB • Ready for Groq AI
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleRemoveFile}
+                                            className="p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10"
+                                            title="Remove"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Self Description Input */}
-                            <div className="self-desc-container">
-                                <label htmlFor="self-description" className="sub-label">
-                                    Quick Summary / Additional Highlights
-                                </label>
-                                <textarea
-                                    id="self-description"
-                                    value={selfDescription}
-                                    onChange={(e) => setSelfDescription(e.target.value)}
-                                    placeholder="Add any extra projects, years of experience, or skills not listed in your resume..."
-                                    rows={3}
-                                />
+                            {/* Stylized Signature / Script Branding */}
+                            <div className="relative z-10 flex items-end justify-between pt-2">
+                                <span className="font-serif italic text-2xl tracking-wide text-white/95">
+                                    ResumeForge
+                                </span>
+                                <span className="text-[10px] font-mono text-orange-200/90 bg-black/40 px-2 py-0.5 rounded-full border border-white/10">
+                                    ATS v2.4
+                                </span>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Workspace Footer Action Bar */}
-                    <div className="workspace-footer">
-                        <div className="footer-tip">
-                            <CheckCircle size={15} className="tip-icon" />
-                            <span>ATS-tailored resume PDF automatically created with report</span>
+                        {/* Candidate Details & Status */}
+                        <div className="flex flex-col items-center text-center gap-1">
+                            <span className="text-sm font-medium text-neutral-200">
+                                {user?.email || "candidate.portfolio@gmail.com"}
+                            </span>
+                            <span className="text-xs text-neutral-500 font-mono">
+                                Powered by Groq Ultra-Low Latency Inference
+                            </span>
                         </div>
+
+                        {/* Social / Specs Mini Pills Row */}
+                        <div className="flex items-center justify-center gap-2">
+                            <span className="px-3 py-1 rounded-full bg-white/[0.04] border border-white/5 text-[11px] text-neutral-400 font-mono">
+                                PDF Native
+                            </span>
+                            <span className="px-3 py-1 rounded-full bg-white/[0.04] border border-white/5 text-[11px] text-neutral-400 font-mono">
+                                Zero Hallucination
+                            </span>
+                            <span className="px-3 py-1 rounded-full bg-white/[0.04] border border-white/5 text-[11px] text-neutral-400 font-mono">
+                                A4 Print Ready
+                            </span>
+                        </div>
+
+                        {/* Primary Action Button (Matches the reference "Get Started ↗" pill) */}
                         <button
-                            type="button"
                             onClick={handleGenerate}
                             disabled={loading}
-                            className="button primary-button generate-btn"
+                            className="w-full flex items-center justify-between p-2 pl-6 rounded-full bg-white text-black font-semibold text-sm hover:bg-neutral-200 transition-all shadow-xl group disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            {loading ? (
-                                <>
-                                    <Loader2 size={18} className="animate-spin" />
-                                    <span>Groq AI Generating Strategy...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Sparkles size={18} />
-                                    <span>Run Gap Analysis & Build Resume</span>
-                                    <ArrowRight size={16} />
-                                </>
-                            )}
+                            <span>
+                                {loading ? "Evaluating With Groq AI..." : "Run Career Gap Analysis"}
+                            </span>
+                            <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                                {loading ? (
+                                    <Loader2 size={16} className="animate-spin text-orange-400" />
+                                ) : (
+                                    <ArrowUpRight size={18} />
+                                )}
+                            </div>
                         </button>
                     </div>
-                </section>
 
-                {/* Saved Reports / History Section */}
-                <section className="saved-reports-section" id="recent-reports">
-                    <div className="section-header">
-                        <div className="header-left">
-                            <FileText size={22} className="icon-blue" />
-                            <div>
-                                <h2>My Saved Interview Analyses & Resumes</h2>
-                                <p className="section-subtitle">
-                                    Access your previous job match evaluations, preparation roadmaps, and download tailored resumes.
+                    {/* ── Right Column: Minimalist Headline, Chips, JD Input & Bottom Bento Cards ── */}
+                    <div className="lg:col-span-8 flex flex-col justify-between gap-6">
+                        {/* Upper Section: Introduction & Headline */}
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-2 text-neutral-400 text-xs font-mono">
+                                <span>•</span>
+                                <span>AI Career Intelligence & ATS Synthesis</span>
+                            </div>
+
+                            {/* Big Bold Headline directly matching reference style */}
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight text-white leading-[1.15]">
+                                Making Your Next Career Move a Pain Free Experience
+                            </h1>
+
+                            <p className="text-neutral-400 text-sm md:text-base font-light max-w-2xl leading-relaxed mt-1">
+                                Benchmark your background against real job requirements. Uncover missing tech competencies,
+                                master tailored interview questions, and export a recruiter-ready ATS resume.
+                            </p>
+
+                            {/* Preset Role Tag Chips (Directly styled like reference image pills: Branding, Art Direction, UI Design...) */}
+                            <div className="flex flex-wrap items-center gap-2 pt-2">
+                                <span className="text-xs text-neutral-400 font-mono mr-1">Load Preset JD:</span>
+                                {PRESET_ROLES.map((role, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => handleSelectPreset(role)}
+                                        className="px-4 py-1.5 rounded-full bg-[#18181c] border border-white/5 text-xs text-neutral-300 hover:text-white hover:border-white/20 transition-all font-medium"
+                                    >
+                                        {role.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Error Alert if any */}
+                        {errorMsg && (
+                            <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
+                                <AlertCircle size={15} className="shrink-0" />
+                                <span>{errorMsg}</span>
+                            </div>
+                        )}
+
+                        {/* Job Description Dark Card */}
+                        <div className="bg-[#121214] border border-white/5 rounded-3xl p-5 md:p-6 flex flex-col gap-3">
+                            <div className="flex items-center justify-between text-xs text-neutral-400">
+                                <div className="flex items-center gap-2">
+                                    <Target size={14} className="text-orange-500" />
+                                    <span className="text-white font-medium">Target Job Description</span>
+                                </div>
+                                <span className="font-mono text-neutral-400">
+                                    {jobDescription.length} / 5000 chars
+                                </span>
+                            </div>
+
+                            <textarea
+                                value={jobDescription}
+                                onChange={(e) => setJobDescription(e.target.value)}
+                                placeholder="Paste the target job description here (requirements, qualifications, responsibilities)..."
+                                className="w-full h-32 md:h-36 bg-[#09090b] border border-white/5 rounded-2xl p-4 text-sm text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors resize-none leading-relaxed"
+                                maxLength={5000}
+                            />
+
+                            {/* Optional supplementary self description accordion */}
+                            <div className="pt-1 flex items-center justify-between">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSelfDesc(!showSelfDesc)}
+                                    className="text-xs text-neutral-400 hover:text-neutral-200 underline font-mono"
+                                >
+                                    {showSelfDesc ? "Hide Extra Highlights" : "+ Add Experience Highlights / Self-Description"}
+                                </button>
+                                {jobDescription && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setJobDescription('')}
+                                        className="text-xs text-neutral-400 hover:text-neutral-300 font-mono"
+                                    >
+                                        Clear Text
+                                    </button>
+                                )}
+                            </div>
+
+                            {showSelfDesc && (
+                                <textarea
+                                    value={selfDescription}
+                                    onChange={(e) => setSelfDescription(e.target.value)}
+                                    placeholder="Add any extra accomplishments, metrics, or technologies not listed in your PDF..."
+                                    className="w-full h-20 bg-[#09090b] border border-white/5 rounded-xl p-3 text-xs text-neutral-300 placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors resize-none"
+                                />
+                            )}
+                        </div>
+
+                        {/* ── Bottom Bento Metric Cards (Matching reference image: Net Worth 20M+ & Success Rate 98%) ── */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Bento Card 1: ATS Compatibility */}
+                            <div className="bg-[#121214] border border-white/5 rounded-3xl p-6 flex flex-col justify-between gap-4">
+                                <span className="text-xs text-neutral-400 font-mono">
+                                    • ATS Compatibility Rate
+                                </span>
+                                <div className="text-5xl font-light tracking-tight text-white font-mono">
+                                    99%
+                                </div>
+                                <p className="text-xs text-neutral-400 font-light">
+                                    Clean semantic formatting passes automated applicant trackers with zero parsing drops.
+                                </p>
+                            </div>
+
+                            {/* Bento Card 2: 7-Day Sprint */}
+                            <div className="bg-[#121214] border border-white/5 rounded-3xl p-6 flex flex-col justify-between gap-4">
+                                <span className="text-xs text-neutral-400 font-mono">
+                                    • Preparation Sprint
+                                </span>
+                                <div className="text-5xl font-light tracking-tight text-white font-mono">
+                                    7 Days
+                                </div>
+                                <p className="text-xs text-neutral-400 font-light">
+                                    Day-by-day technical curriculum closing critical gaps before your first technical screen.
                                 </p>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        {/* Search Filter */}
+                {/* ── Saved Reports History Section ── */}
+                <section id="recent-reports" className="pt-8 border-t border-white/[0.06] flex flex-col gap-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                            <div className="flex items-center gap-2 text-neutral-400 text-xs font-mono mb-1">
+                                <span>•</span>
+                                <span>Archive</span>
+                            </div>
+                            <h2 className="text-2xl font-normal text-white tracking-tight">
+                                Saved Interview Strategies & Resumes
+                            </h2>
+                        </div>
+
                         {reports.length > 0 && (
-                            <div className="search-bar">
-                                <Search size={16} className="search-icon" />
+                            <div className="relative w-full sm:w-72">
+                                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
                                 <input
                                     type="text"
-                                    placeholder="Search by job title..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Search by job title..."
+                                    className="w-full pl-9 pr-4 py-2 bg-[#121214] border border-white/5 rounded-full text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-white/20"
                                 />
-                                {searchTerm && (
-                                    <button
-                                        onClick={() => setSearchTerm('')}
-                                        className="clear-search"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                )}
                             </div>
                         )}
                     </div>
 
-                    {/* Reports Grid */}
                     {reports.length === 0 ? (
-                        <div className="empty-reports-card">
-                            <Briefcase size={40} className="empty-icon" />
-                            <h3>No Analyses Generated Yet</h3>
-                            <p>
-                                Paste a target job description and upload your resume above to create your first comprehensive
-                                interview prep strategy and ATS-friendly resume!
+                        <div className="bg-[#121214] border border-white/5 rounded-3xl p-12 flex flex-col items-center justify-center text-center gap-3">
+                            <Layers size={32} className="text-neutral-600" />
+                            <h3 className="text-base font-medium text-neutral-300">
+                                No Career Strategies Generated Yet
+                            </h3>
+                            <p className="text-xs text-neutral-400 max-w-md">
+                                Paste a target job description and upload your resume above to create your first deep gap analysis and custom ATS resume.
                             </p>
                         </div>
                     ) : filteredReports.length === 0 ? (
-                        <div className="empty-search-card">
-                            <p>No reports match "<strong>{searchTerm}</strong>"</p>
-                            <button onClick={() => setSearchTerm('')} className="button secondary-button">
-                                Clear Search
-                            </button>
+                        <div className="bg-[#121214] border border-white/5 rounded-3xl p-8 text-center text-xs text-neutral-400">
+                            No reports matching "{searchTerm}".
                         </div>
                     ) : (
-                        <div className="reports-grid">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             {filteredReports.map((reportItem) => {
                                 const score = reportItem.matchScore ?? 0;
-                                const scoreClass =
-                                    score >= 80 ? 'score-high' :
-                                    score >= 60 ? 'score-mid' : 'score-low';
+                                const isDownloading = downloadingId === reportItem._id;
+                                const isDeleting = deletingId === reportItem._id;
 
                                 return (
                                     <div
                                         key={reportItem._id}
-                                        className="report-card"
                                         onClick={() => navigate(`/interview/${reportItem._id}`)}
+                                        className="bg-[#121214] border border-white/5 hover:border-white/20 rounded-3xl p-6 flex flex-col justify-between gap-5 cursor-pointer transition-all hover:-translate-y-0.5 shadow-lg group"
                                     >
-                                        <div className="card-top">
-                                            <div className="title-area">
-                                                <h3 className="report-title">{reportItem.title || 'Untitled Target Position'}</h3>
-                                                <div className="report-meta">
-                                                    <Clock size={13} />
-                                                    <span>{new Date(reportItem.createdAt).toLocaleDateString(undefined, {
-                                                        year: 'numeric',
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center justify-between text-xs text-neutral-400 font-mono">
+                                                <span className="flex items-center gap-1">
+                                                    <Clock size={12} />
+                                                    {new Date(reportItem.createdAt).toLocaleDateString([], {
                                                         month: 'short',
-                                                        day: 'numeric'
-                                                    })}</span>
-                                                </div>
+                                                        day: 'numeric',
+                                                        year: 'numeric'
+                                                    })}
+                                                </span>
+                                                <span className="px-2.5 py-0.5 rounded-full bg-white/[0.04] border border-white/5 text-[11px] text-orange-400">
+                                                    {score}% Match
+                                                </span>
                                             </div>
 
-                                            {/* Match Score Badge */}
-                                            <div className={`score-badge ${scoreClass}`} title="Profile Match Rate">
-                                                <span className="score-num">{score}%</span>
-                                                <span className="score-text">Match</span>
-                                            </div>
+                                            <h3 className="text-lg font-semibold text-white tracking-tight line-clamp-2 mt-1">
+                                                {reportItem.title || "Untitled Engineering Role"}
+                                            </h3>
+
+                                            <p className="text-xs text-neutral-400 line-clamp-2 font-light">
+                                                Click to review technical question bank, STAR behavioral answers, and 7-day preparation roadmap.
+                                            </p>
                                         </div>
 
-                                        <p className="card-hint">
-                                            Click to review technical questions, STAR behavioral responses, and day-by-day roadmap.
-                                        </p>
-
                                         {/* Card Actions */}
-                                        <div className="card-actions">
+                                        <div className="flex items-center justify-between pt-3 border-t border-white/[0.05]">
                                             <button
                                                 type="button"
                                                 onClick={(e) => onDownloadResume(e, reportItem._id)}
-                                                disabled={activeDownloadingId === reportItem._id}
-                                                className="action-btn download-btn"
-                                                title="Download ATS-Optimized Resume PDF"
+                                                disabled={isDownloading}
+                                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-xs font-medium text-neutral-200 transition"
                                             >
-                                                {activeDownloadingId === reportItem._id ? (
-                                                    <Loader2 size={14} className="animate-spin" />
+                                                {isDownloading ? (
+                                                    <Loader2 size={13} className="animate-spin text-orange-400" />
                                                 ) : (
-                                                    <Download size={14} />
+                                                    <Download size={13} />
                                                 )}
-                                                <span>{activeDownloadingId === reportItem._id ? 'Generating PDF...' : 'Download Resume'}</span>
+                                                <span>{isDownloading ? "Generating..." : "Resume PDF"}</span>
                                             </button>
 
-                                            <button
-                                                type="button"
-                                                onClick={(e) => onDelete(e, reportItem._id)}
-                                                disabled={activeDeletingId === reportItem._id}
-                                                className="action-btn delete-btn"
-                                                title="Delete this analysis"
-                                            >
-                                                {activeDeletingId === reportItem._id ? (
-                                                    <Loader2 size={14} className="animate-spin" />
-                                                ) : (
-                                                    <Trash2 size={14} />
-                                                )}
-                                            </button>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => onDeleteReport(e, reportItem._id)}
+                                                    disabled={isDeleting}
+                                                    className="p-1.5 rounded-full text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                                                    title="Delete report"
+                                                >
+                                                    {isDeleting ? (
+                                                        <Loader2 size={13} className="animate-spin" />
+                                                    ) : (
+                                                        <Trash2 size={13} />
+                                                    )}
+                                                </button>
+
+                                                <div className="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center group-hover:scale-105 transition-transform">
+                                                    <ArrowUpRight size={14} />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 );

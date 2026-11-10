@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
-import { Sparkles, User, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
-import '../auth.form.scss';
+import Layout from '../../../components/Layout';
+import { Sparkles, User, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowUpRight, Loader2 } from 'lucide-react';
 
 const Register = () => {
     const { loading, handleRegister, authError, setAuthError } = useAuth();
@@ -31,115 +31,127 @@ const Register = () => {
             await handleRegister({ username, email, password });
             navigate('/');
         } catch (err) {
-            // Error is handled in hook
+            // Handled in hook
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <main className="auth-page">
-            <div className="form-container">
-                <div className="auth-header">
-                    <div className="auth-icon-badge">
-                        <Sparkles size={22} />
-                    </div>
-                    <h1>Create Account</h1>
-                    <p>Start generating tailored ATS resumes & interview game plans</p>
-                </div>
+        <Layout>
+            <div className="min-h-[75vh] flex items-center justify-center px-4 py-12">
+                <div className="w-full max-w-md bg-[#121214] border border-white/5 rounded-3xl p-8 sm:p-9 shadow-2xl flex flex-col gap-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-                {authError && (
-                    <div className="auth-error-alert">
-                        <AlertCircle size={18} />
-                        <span>{authError}</span>
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit}>
-                    <div className="input-group">
-                        <label htmlFor="username">Full Name or Username</label>
-                        <div className="input-wrapper">
-                            <User size={16} className="field-icon" />
-                            <input
-                                id="username"
-                                type="text"
-                                name="username"
-                                placeholder="alex_dev"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                autoFocus
-                                required
-                            />
+                    <div className="flex flex-col gap-2 text-center items-center">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-neutral-800 to-neutral-950 border border-white/10 flex items-center justify-center text-orange-500 shadow-lg">
+                            <Sparkles size={20} />
                         </div>
+                        <h1 className="text-2xl font-normal tracking-tight text-white mt-1">
+                            Create Account
+                        </h1>
+                        <p className="text-xs text-neutral-400 font-light max-w-xs">
+                            Start generating tailored ATS resumes and targeted technical game plans with Groq AI.
+                        </p>
                     </div>
 
-                    <div className="input-group">
-                        <label htmlFor="email">Email Address</label>
-                        <div className="input-wrapper">
-                            <Mail size={16} className="field-icon" />
-                            <input
-                                id="email"
-                                type="email"
-                                name="email"
-                                placeholder="alex@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
+                    {authError && (
+                        <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
+                            <AlertCircle size={15} className="shrink-0" />
+                            <span>{authError}</span>
                         </div>
-                    </div>
+                    )}
 
-                    <div className="input-group">
-                        <label htmlFor="password">Password</label>
-                        <div className="input-wrapper">
-                            <Lock size={16} className="field-icon" />
-                            <input
-                                id="password"
-                                type={showPassword ? 'text' : 'password'}
-                                name="password"
-                                placeholder="Min. 6 characters"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                minLength={6}
-                            />
-                            <button
-                                type="button"
-                                className="toggle-password"
-                                onClick={() => setShowPassword(!showPassword)}
-                                tabIndex={-1}
-                                title={showPassword ? "Hide password" : "Show password"}
-                            >
-                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-mono text-neutral-400" htmlFor="username">
+                                Username or Full Name
+                            </label>
+                            <div className="relative">
+                                <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+                                <input
+                                    id="username"
+                                    type="text"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    placeholder="alex_dev"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-[#09090b] border border-white/5 rounded-xl text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+                                    required
+                                    autoFocus
+                                />
+                            </div>
                         </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-mono text-neutral-400" htmlFor="email">
+                                Email Address
+                            </label>
+                            <div className="relative">
+                                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+                                <input
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="alex@example.com"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-[#09090b] border border-white/5 rounded-xl text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-mono text-neutral-400" htmlFor="password">
+                                Password
+                            </label>
+                            <div className="relative">
+                                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Min. 6 characters"
+                                    className="w-full pl-10 pr-10 py-2.5 bg-[#09090b] border border-white/5 rounded-xl text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+                                    required
+                                    minLength={6}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
+                                    tabIndex={-1}
+                                >
+                                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={isSubmitting || loading}
+                            className="mt-2 w-full flex items-center justify-between p-2 pl-6 rounded-full bg-white text-black font-semibold text-xs hover:bg-neutral-200 transition shadow-xl group disabled:opacity-60"
+                        >
+                            <span>{isSubmitting ? "Creating Account..." : "Create Free Account"}</span>
+                            <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                                {isSubmitting ? (
+                                    <Loader2 size={14} className="animate-spin text-orange-400" />
+                                ) : (
+                                    <ArrowUpRight size={15} />
+                                )}
+                            </div>
+                        </button>
+                    </form>
+
+                    <div className="text-center text-xs text-neutral-400 font-light">
+                        Already have an account?{' '}
+                        <Link to="/login" className="text-white font-medium hover:underline">
+                            Sign In
+                        </Link>
                     </div>
-
-                    <button
-                        type="submit"
-                        disabled={isSubmitting || loading}
-                        className="button primary-button submit-button"
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <Loader2 size={18} className="animate-spin" />
-                                <span>Creating Account...</span>
-                            </>
-                        ) : (
-                            <>
-                                <span>Create Free Account</span>
-                                <ArrowRight size={16} />
-                            </>
-                        )}
-                    </button>
-                </form>
-
-                <div className="auth-footer">
-                    <span>Already have an account?</span>
-                    <Link to="/login">Sign In</Link>
                 </div>
             </div>
-        </main>
+        </Layout>
     );
 };
 

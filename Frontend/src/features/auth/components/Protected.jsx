@@ -8,18 +8,9 @@ const Protected = ({ children }) => {
 
     if (loading) {
         return (
-            <div style={{
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '1rem',
-                background: '#080b12',
-                color: '#94a3b8'
-            }}>
-                <Loader2 size={32} className="animate-spin" style={{ color: '#3b82f6' }} />
-                <p style={{ fontSize: '0.95rem' }}>Verifying authentication...</p>
+            <div className="min-h-screen bg-[#070709] flex flex-col items-center justify-center gap-3 text-neutral-400">
+                <Loader2 size={32} className="animate-spin text-orange-500" />
+                <p className="text-xs font-mono text-neutral-400">Verifying session token...</p>
             </div>
         );
     }
