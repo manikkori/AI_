@@ -79,7 +79,12 @@ app.use("/api/interview", interviewRouter);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
-    res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
+    res.status(200).json({
+        status: "healthy",
+        uptimeSeconds: Math.floor(process.uptime()),
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || "development"
+    });
 });
 
 // Centralized Error Handling Middleware
