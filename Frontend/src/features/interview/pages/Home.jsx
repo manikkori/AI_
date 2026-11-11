@@ -111,19 +111,26 @@ const Home = () => {
 
     const handleGenerate = async () => {
         setErrorMsg('');
-        if (!jobDescription.trim()) {
+        const cleanedJD = jobDescription.trim();
+        const cleanedSelfDesc = selfDescription.trim();
+
+        if (!cleanedJD) {
             setErrorMsg('Please paste a target Job Description to benchmark against.');
             return;
         }
-        if (!selectedFile && !selfDescription.trim()) {
+        if (cleanedJD.length < 20) {
+            setErrorMsg('Please provide a more detailed job description (minimum 20 characters) for accurate analysis.');
+            return;
+        }
+        if (!selectedFile && !cleanedSelfDesc) {
             setErrorMsg('Please upload a PDF resume or type your experience highlights.');
             return;
         }
 
         try {
             const data = await generateReport({
-                jobDescription,
-                selfDescription,
+                jobDescription: cleanedJD,
+                selfDescription: cleanedSelfDesc,
                 resumeFile: selectedFile
             });
             if (data?._id) {
