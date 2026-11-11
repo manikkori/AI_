@@ -99,14 +99,26 @@ const FloatingDock = () => {
 
             {/* Logout Confirmation Modal */}
             {showLogoutModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="w-full max-w-sm bg-[#141416] border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col gap-4 relative overflow-hidden">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget && !isLoggingOut) setShowLogoutModal(false);
+                    }}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="dock-logout-modal-title"
+                        className="w-full max-w-sm bg-[#141416] border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col gap-4 relative overflow-hidden"
+                    >
                         <div className="flex items-center justify-between">
                             <div className="w-10 h-10 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center">
                                 <AlertCircle size={20} />
                             </div>
                             <button
+                                type="button"
                                 onClick={() => setShowLogoutModal(false)}
+                                aria-label="Close dialog"
                                 className="p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition"
                             >
                                 <X size={16} />
@@ -114,7 +126,7 @@ const FloatingDock = () => {
                         </div>
 
                         <div>
-                            <h3 className="text-lg font-semibold text-white tracking-tight">Confirm Logout</h3>
+                            <h3 id="dock-logout-modal-title" className="text-lg font-semibold text-white tracking-tight">Confirm Logout</h3>
                             <p className="text-sm text-neutral-400 mt-1 font-light leading-relaxed">
                                 Are you sure you want to end your current session?
                             </p>
