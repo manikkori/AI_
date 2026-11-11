@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useInterview } from '../hooks/useInterview';
 import Layout from '../../../components/Layout';
@@ -126,19 +126,33 @@ const Interview = () => {
     }
 
     const score = report.matchScore ?? 0;
-    const totalTasks = report.preparationPlan?.reduce((acc, curr) => acc + (curr.tasks?.length || 0), 0) || 0;
-    const completedTasksCount = Object.values(completedTasks).filter(Boolean).length;
+    const totalTasks = useMemo(() => {
+        return report.preparationPlan?.reduce((acc, curr) => acc + (curr.tasks?.length || 0), 0) || 0;
+    }, [report.preparationPlan]);
+
+    const completedTasksCount = useMemo(() => {
+        return Object.values(completedTasks).filter(Boolean).length;
+    }, [completedTasks]);
+
     const roadmapProgressPct = totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0;
 
-    const filteredTechQuestions = (report.technicalQuestions || []).filter(q =>
-        q.question?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.answer?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredTechQuestions = useMemo(() => {
+        const query = (searchQuery || '').trim().toLowerCase();
+        if (!query) return report.technicalQuestions || [];
+        return (report.technicalQuestions || []).filter(q =>
+            q.question?.toLowerCase().includes(query) ||
+            q.answer?.toLowerCase().includes(query)
+        );
+    }, [report.technicalQuestions, searchQuery]);
 
-    const filteredBehavioralQuestions = (report.behavioralQuestions || []).filter(q =>
-        q.question?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.answer?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredBehavioralQuestions = useMemo(() => {
+        const query = (searchQuery || '').trim().toLowerCase();
+        if (!query) return report.behavioralQuestions || [];
+        return (report.behavioralQuestions || []).filter(q =>
+            q.question?.toLowerCase().includes(query) ||
+            q.answer?.toLowerCase().includes(query)
+        );
+    }, [report.behavioralQuestions, searchQuery]);
 
     return (
         <Layout>
