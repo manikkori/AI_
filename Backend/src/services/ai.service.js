@@ -111,17 +111,26 @@ Provide at least 4-6 technical questions, 3-4 behavioral questions, all identifi
  * Generate PDF buffer from HTML using Puppeteer
  */
 async function generatePdfFromHtml(htmlContent) {
-    const browser = await puppeteer.launch({
-        headless: true,
+    const launchOptions = {
+        headless: "new",
         args: [
             "--no-sandbox",
             "--disable-setuid-sandbox",
             "--disable-dev-shm-usage",
-            "--disable-gpu"
+            "--disable-gpu",
+            "--no-first-run",
+            "--no-zygote",
+            "--single-process"
         ]
-    });
+    };
 
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
+
+    let browser = null;
     try {
+        browser = await puppeteer.launch(launchOptions);
         const page = await browser.newPage();
         await page.setContent(htmlContent, {
             waitUntil: "networkidle0",
@@ -140,8 +149,17 @@ async function generatePdfFromHtml(htmlContent) {
         });
 
         return pdfBuffer;
+    } catch (err) {
+        console.error("Puppeteer PDF generation failed:", err.message);
+        throw new Error(`PDF generation failure: ${err.message}`);
     } finally {
-        await browser.close();
+        if (browser) {
+            try {
+                await browser.close();
+            } catch (closeErr) {
+                console.error("Error closing Puppeteer browser:", closeErr.message);
+            }
+        }
     }
 }
 
