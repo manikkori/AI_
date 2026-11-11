@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const pdfParse = require("pdf-parse");
 const { generateInterviewReport, generateResumePdf } = require("../services/ai.service");
 const interviewReportModel = require("../models/interviewReport.model");
@@ -73,6 +74,12 @@ async function getInterviewReportByIdController(req, res) {
     try {
         const { interviewId } = req.params;
 
+        if (!mongoose.Types.ObjectId.isValid(interviewId)) {
+            return res.status(400).json({
+                message: "Invalid interview report ID format."
+            });
+        }
+
         const interviewReport = await interviewReportModel.findOne({
             _id: interviewId,
             user: req.user.id
@@ -127,6 +134,12 @@ async function deleteInterviewReportController(req, res) {
     try {
         const { interviewId } = req.params;
 
+        if (!mongoose.Types.ObjectId.isValid(interviewId)) {
+            return res.status(400).json({
+                message: "Invalid interview report ID format."
+            });
+        }
+
         const deletedReport = await interviewReportModel.findOneAndDelete({
             _id: interviewId,
             user: req.user.id
@@ -157,6 +170,12 @@ async function deleteInterviewReportController(req, res) {
 async function generateResumePdfController(req, res) {
     try {
         const { interviewReportId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(interviewReportId)) {
+            return res.status(400).json({
+                message: "Invalid interview report ID format."
+            });
+        }
 
         // Security check: IDOR protection - user can only generate resume for their own report
         const interviewReport = await interviewReportModel.findOne({
