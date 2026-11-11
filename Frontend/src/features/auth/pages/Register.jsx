@@ -51,7 +51,7 @@ const Register = () => {
                             Create Account
                         </h1>
                         <p className="text-sm text-neutral-400 font-light max-w-xs leading-relaxed">
-                            Start generating tailored ATS resumes and targeted technical game plans with Groq AI.
+                            Start generating tailored ATS resumes and targeted technical preparation roadmaps.
                         </p>
                     </div>
 

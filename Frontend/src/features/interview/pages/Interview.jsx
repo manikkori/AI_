@@ -118,8 +118,8 @@ const Interview = () => {
             <Layout>
                 <div className="min-h-[65vh] flex flex-col items-center justify-center gap-4 text-neutral-400">
                     <Loader2 size={40} className="animate-spin text-orange-500" />
-                    <h2 className="text-2xl font-semibold text-white">Synthesizing Strategy with Groq AI...</h2>
-                    <p className="text-sm text-neutral-400">Loading your interview questions, skill gaps, and ATS resume matrix.</p>
+                    <h2 className="text-2xl font-semibold text-white">Generating Preparation Strategy...</h2>
+                    <p className="text-sm text-neutral-400">Loading interview questions, skill gaps, and preparation plan...</p>
                 </div>
             </Layout>
         );

@@ -236,7 +236,7 @@ const Home = () => {
                                                     {selectedFile.name}
                                                 </p>
                                                 <p className="text-xs text-emerald-300 font-mono">
-                                                    {(selectedFile.size / 1024).toFixed(0)} KB • Ready for Groq AI
+                                                    {(selectedFile.size / 1024).toFixed(0)} KB • Ready for Analysis
                                                 </p>
                                             </div>
                                         </div>
@@ -268,7 +268,7 @@ const Home = () => {
                                 {user?.email || "candidate.portfolio@gmail.com"}
                             </span>
                             <span className="text-xs text-neutral-400 font-mono">
-                                Powered by Groq Ultra-Low Latency Inference
+                                Real-time Skill Gap Analysis & ATS Optimization
                             </span>
                         </div>
 
@@ -292,7 +292,7 @@ const Home = () => {
                             className="w-full flex items-center justify-between p-2.5 pl-6 rounded-full bg-white text-black font-semibold text-base hover:bg-neutral-200 transition-all shadow-xl group disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             <span>
-                                {loading ? "Evaluating With Groq AI..." : "Run Career Gap Analysis"}
+                                {loading ? "Analyzing Profile..." : "Run Career Gap Analysis"}
                             </span>
                             <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center group-hover:scale-105 transition-transform">
                                 {loading ? (
