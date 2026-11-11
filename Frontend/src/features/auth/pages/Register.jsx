@@ -44,38 +44,38 @@ const Register = () => {
                     <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
                     <div className="flex flex-col gap-2 text-center items-center">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-neutral-800 to-neutral-950 border border-white/10 flex items-center justify-center text-orange-500 shadow-lg">
-                            <Sparkles size={20} />
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-neutral-800 to-neutral-950 border border-white/10 flex items-center justify-center text-orange-500 shadow-lg">
+                            <Sparkles size={22} />
                         </div>
-                        <h1 className="text-2xl font-normal tracking-tight text-white mt-1">
+                        <h1 className="text-2xl sm:text-3xl font-normal tracking-tight text-white mt-1">
                             Create Account
                         </h1>
-                        <p className="text-xs text-neutral-400 font-light max-w-xs">
+                        <p className="text-sm text-neutral-400 font-light max-w-xs leading-relaxed">
                             Start generating tailored ATS resumes and targeted technical game plans with Groq AI.
                         </p>
                     </div>
 
                     {authError && (
-                        <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
-                            <AlertCircle size={15} className="shrink-0" />
+                        <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+                            <AlertCircle size={16} className="shrink-0" />
                             <span>{authError}</span>
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-mono text-neutral-400" htmlFor="username">
+                            <label className="text-sm font-mono text-neutral-300" htmlFor="username">
                                 Username or Full Name
                             </label>
                             <div className="relative">
-                                <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+                                <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
                                 <input
                                     id="username"
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     placeholder="alex_dev"
-                                    className="w-full pl-10 pr-4 py-2.5 bg-[#09090b] border border-white/5 rounded-xl text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+                                    className="w-full pl-10 pr-4 py-3 bg-[#09090b] border border-white/5 rounded-xl text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-white/20 transition-colors"
                                     required
                                     autoFocus
                                 />
@@ -83,46 +83,46 @@ const Register = () => {
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-mono text-neutral-400" htmlFor="email">
+                            <label className="text-sm font-mono text-neutral-300" htmlFor="email">
                                 Email Address
                             </label>
                             <div className="relative">
-                                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+                                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
                                 <input
                                     id="email"
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="alex@example.com"
-                                    className="w-full pl-10 pr-4 py-2.5 bg-[#09090b] border border-white/5 rounded-xl text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+                                    className="w-full pl-10 pr-4 py-3 bg-[#09090b] border border-white/5 rounded-xl text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-white/20 transition-colors"
                                     required
                                 />
                             </div>
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-mono text-neutral-400" htmlFor="password">
+                            <label className="text-sm font-mono text-neutral-300" htmlFor="password">
                                 Password
                             </label>
                             <div className="relative">
-                                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+                                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
                                 <input
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Min. 6 characters"
-                                    className="w-full pl-10 pr-10 py-2.5 bg-[#09090b] border border-white/5 rounded-xl text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+                                    className="w-full pl-10 pr-10 py-3 bg-[#09090b] border border-white/5 rounded-xl text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-white/20 transition-colors"
                                     required
                                     minLength={6}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
                                     tabIndex={-1}
                                 >
-                                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
                             </div>
                         </div>
@@ -130,20 +130,20 @@ const Register = () => {
                         <button
                             type="submit"
                             disabled={isSubmitting || loading}
-                            className="mt-2 w-full flex items-center justify-between p-2 pl-6 rounded-full bg-white text-black font-semibold text-xs hover:bg-neutral-200 transition shadow-xl group disabled:opacity-60"
+                            className="mt-2 w-full flex items-center justify-between p-2 pl-6 rounded-full bg-white text-black font-semibold text-sm hover:bg-neutral-200 transition shadow-xl group disabled:opacity-60"
                         >
                             <span>{isSubmitting ? "Creating Account..." : "Create Free Account"}</span>
-                            <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                            <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center group-hover:scale-105 transition-transform">
                                 {isSubmitting ? (
-                                    <Loader2 size={14} className="animate-spin text-orange-400" />
+                                    <Loader2 size={16} className="animate-spin text-orange-400" />
                                 ) : (
-                                    <ArrowUpRight size={15} />
+                                    <ArrowUpRight size={17} />
                                 )}
                             </div>
                         </button>
                     </form>
 
-                    <div className="text-center text-xs text-neutral-400 font-light">
+                    <div className="text-center text-sm text-neutral-400 font-light">
                         Already have an account?{' '}
                         <Link to="/login" className="text-white font-medium hover:underline">
                             Sign In

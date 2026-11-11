@@ -173,10 +173,10 @@ const Home = () => {
                     <div className="lg:col-span-4 bg-[#121214] border border-white/5 rounded-3xl p-6 sm:p-7 flex flex-col justify-between gap-6 shadow-2xl relative overflow-hidden">
                         {/* Top: Brand mark + Live Availability Badge */}
                         <div className="flex items-center justify-between">
-                            <div className="w-7 h-7 rounded-lg bg-neutral-900 border border-white/10 flex items-center justify-center text-orange-500">
-                                <Sparkles size={14} />
+                            <div className="w-8 h-8 rounded-lg bg-neutral-900 border border-white/10 flex items-center justify-center text-orange-500">
+                                <Sparkles size={16} />
                             </div>
-                            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[11px] text-neutral-300">
+                            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs font-medium text-neutral-300">
                                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                 <span>ATS Analyzer Active</span>
                             </div>
@@ -188,13 +188,13 @@ const Home = () => {
                             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-400/30 rounded-full blur-2xl pointer-events-none"></div>
 
                             <div className="relative z-10">
-                                <span className="text-[11px] font-mono tracking-widest text-orange-200 uppercase opacity-90">
+                                <span className="text-xs font-mono font-bold tracking-widest text-orange-200 uppercase opacity-95">
                                     • Candidate Profile Matrix
                                 </span>
-                                <h3 className="text-2xl font-bold tracking-tight text-white mt-1">
+                                <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-1">
                                     {user?.username ? user.username : "Your Career"}
                                 </h3>
-                                <p className="text-xs text-orange-100/80 mt-1 font-light">
+                                <p className="text-sm text-orange-100/90 mt-1 font-normal">
                                     Targeting High-Growth Engineering Roles
                                 </p>
                             </div>
@@ -208,7 +208,7 @@ const Home = () => {
                                         onDragOver={handleDrag}
                                         onDrop={handleDrop}
                                         onClick={() => fileInputRef.current?.click()}
-                                        className={`w-full py-4 px-3 rounded-xl border border-white/30 bg-black/40 backdrop-blur-md cursor-pointer transition-all flex flex-col items-center justify-center text-center ${
+                                        className={`w-full py-5 px-3 rounded-xl border border-white/30 bg-black/40 backdrop-blur-md cursor-pointer transition-all flex flex-col items-center justify-center text-center ${
                                             dragActive ? 'bg-black/60 border-white ring-2 ring-white/50' : 'hover:bg-black/50'
                                         }`}
                                     >
@@ -219,23 +219,23 @@ const Home = () => {
                                             onChange={(e) => e.target.files?.[0] && handleValidateFile(e.target.files[0])}
                                             className="hidden"
                                         />
-                                        <UploadCloud size={22} className="text-orange-300 mb-1" />
-                                        <span className="text-xs font-semibold text-white">
+                                        <UploadCloud size={24} className="text-orange-300 mb-1.5" />
+                                        <span className="text-sm font-semibold text-white">
                                             Drop PDF Resume Here
                                         </span>
-                                        <span className="text-[10px] text-orange-200/80 mt-0.5">
+                                        <span className="text-xs text-orange-100/90 mt-0.5 font-mono">
                                             Max 5MB • Instant Vector Parsing
                                         </span>
                                     </div>
                                 ) : (
-                                    <div className="w-full p-3 rounded-xl border border-emerald-500/40 bg-black/60 backdrop-blur-md flex items-center justify-between">
+                                    <div className="w-full p-3.5 rounded-xl border border-emerald-500/40 bg-black/60 backdrop-blur-md flex items-center justify-between">
                                         <div className="flex items-center gap-2.5 min-w-0">
-                                            <FileText size={20} className="text-emerald-400 shrink-0" />
+                                            <FileText size={22} className="text-emerald-400 shrink-0" />
                                             <div className="truncate">
-                                                <p className="text-xs font-semibold text-white truncate">
+                                                <p className="text-sm font-semibold text-white truncate">
                                                     {selectedFile.name}
                                                 </p>
-                                                <p className="text-[10px] text-emerald-300 font-mono">
+                                                <p className="text-xs text-emerald-300 font-mono">
                                                     {(selectedFile.size / 1024).toFixed(0)} KB • Ready for Groq AI
                                                 </p>
                                             </div>
@@ -245,7 +245,7 @@ const Home = () => {
                                             className="p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10"
                                             title="Remove"
                                         >
-                                            <X size={14} />
+                                            <X size={16} />
                                         </button>
                                     </div>
                                 )}
@@ -256,7 +256,7 @@ const Home = () => {
                                 <span className="font-serif italic text-2xl tracking-wide text-white/95">
                                     ResumeForge
                                 </span>
-                                <span className="text-[10px] font-mono text-orange-200/90 bg-black/40 px-2 py-0.5 rounded-full border border-white/10">
+                                <span className="text-xs font-mono font-medium text-orange-200 bg-black/40 px-2.5 py-1 rounded-full border border-white/10">
                                     ATS v2.4
                                 </span>
                             </div>
@@ -264,23 +264,23 @@ const Home = () => {
 
                         {/* Candidate Details & Status */}
                         <div className="flex flex-col items-center text-center gap-1">
-                            <span className="text-sm font-medium text-neutral-200">
+                            <span className="text-base font-medium text-neutral-200">
                                 {user?.email || "candidate.portfolio@gmail.com"}
                             </span>
-                            <span className="text-xs text-neutral-500 font-mono">
+                            <span className="text-xs text-neutral-400 font-mono">
                                 Powered by Groq Ultra-Low Latency Inference
                             </span>
                         </div>
 
                         {/* Social / Specs Mini Pills Row */}
                         <div className="flex items-center justify-center gap-2">
-                            <span className="px-3 py-1 rounded-full bg-white/[0.04] border border-white/5 text-[11px] text-neutral-400 font-mono">
+                            <span className="px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/5 text-xs text-neutral-300 font-mono">
                                 PDF Native
                             </span>
-                            <span className="px-3 py-1 rounded-full bg-white/[0.04] border border-white/5 text-[11px] text-neutral-400 font-mono">
+                            <span className="px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/5 text-xs text-neutral-300 font-mono">
                                 Zero Hallucination
                             </span>
-                            <span className="px-3 py-1 rounded-full bg-white/[0.04] border border-white/5 text-[11px] text-neutral-400 font-mono">
+                            <span className="px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/5 text-xs text-neutral-300 font-mono">
                                 A4 Print Ready
                             </span>
                         </div>
@@ -289,16 +289,16 @@ const Home = () => {
                         <button
                             onClick={handleGenerate}
                             disabled={loading}
-                            className="w-full flex items-center justify-between p-2 pl-6 rounded-full bg-white text-black font-semibold text-sm hover:bg-neutral-200 transition-all shadow-xl group disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-full flex items-center justify-between p-2.5 pl-6 rounded-full bg-white text-black font-semibold text-base hover:bg-neutral-200 transition-all shadow-xl group disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             <span>
                                 {loading ? "Evaluating With Groq AI..." : "Run Career Gap Analysis"}
                             </span>
-                            <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                            <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center group-hover:scale-105 transition-transform">
                                 {loading ? (
-                                    <Loader2 size={16} className="animate-spin text-orange-400" />
+                                    <Loader2 size={18} className="animate-spin text-orange-400" />
                                 ) : (
-                                    <ArrowUpRight size={18} />
+                                    <ArrowUpRight size={20} />
                                 )}
                             </div>
                         </button>
@@ -308,7 +308,7 @@ const Home = () => {
                     <div className="lg:col-span-8 flex flex-col justify-between gap-6">
                         {/* Upper Section: Introduction & Headline */}
                         <div className="flex flex-col gap-3">
-                            <div className="flex items-center gap-2 text-neutral-400 text-xs font-mono">
+                            <div className="flex items-center gap-2 text-neutral-400 text-sm font-mono">
                                 <span>•</span>
                                 <span>AI Career Intelligence & ATS Synthesis</span>
                             </div>
@@ -318,20 +318,20 @@ const Home = () => {
                                 Making Your Next Career Move a Pain Free Experience
                             </h1>
 
-                            <p className="text-neutral-400 text-sm md:text-base font-light max-w-2xl leading-relaxed mt-1">
+                            <p className="text-neutral-300 text-base md:text-lg font-light max-w-2xl leading-relaxed mt-1">
                                 Benchmark your background against real job requirements. Uncover missing tech competencies,
                                 master tailored interview questions, and export a recruiter-ready ATS resume.
                             </p>
 
                             {/* Preset Role Tag Chips (Directly styled like reference image pills: Branding, Art Direction, UI Design...) */}
-                            <div className="flex flex-wrap items-center gap-2 pt-2">
-                                <span className="text-xs text-neutral-400 font-mono mr-1">Load Preset JD:</span>
+                            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+                                <span className="text-sm text-neutral-400 font-mono mr-1">Load Preset JD:</span>
                                 {PRESET_ROLES.map((role, idx) => (
                                     <button
                                         key={idx}
                                         type="button"
                                         onClick={() => handleSelectPreset(role)}
-                                        className="px-4 py-1.5 rounded-full bg-[#18181c] border border-white/5 text-xs text-neutral-300 hover:text-white hover:border-white/20 transition-all font-medium"
+                                        className="px-4 py-2 rounded-full bg-[#18181c] border border-white/5 text-sm text-neutral-300 hover:text-white hover:border-white/20 transition-all font-medium"
                                     >
                                         {role.name}
                                     </button>
@@ -341,20 +341,20 @@ const Home = () => {
 
                         {/* Error Alert if any */}
                         {errorMsg && (
-                            <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
-                                <AlertCircle size={15} className="shrink-0" />
+                            <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+                                <AlertCircle size={16} className="shrink-0" />
                                 <span>{errorMsg}</span>
                             </div>
                         )}
 
                         {/* Job Description Dark Card */}
                         <div className="bg-[#121214] border border-white/5 rounded-3xl p-5 md:p-6 flex flex-col gap-3">
-                            <div className="flex items-center justify-between text-xs text-neutral-400">
+                            <div className="flex items-center justify-between text-sm text-neutral-300">
                                 <div className="flex items-center gap-2">
-                                    <Target size={14} className="text-orange-500" />
+                                    <Target size={16} className="text-orange-500" />
                                     <span className="text-white font-medium">Target Job Description</span>
                                 </div>
-                                <span className="font-mono text-neutral-400">
+                                <span className="font-mono text-xs text-neutral-400">
                                     {jobDescription.length} / 5000 chars
                                 </span>
                             </div>
@@ -363,7 +363,7 @@ const Home = () => {
                                 value={jobDescription}
                                 onChange={(e) => setJobDescription(e.target.value)}
                                 placeholder="Paste the target job description here (requirements, qualifications, responsibilities)..."
-                                className="w-full h-32 md:h-36 bg-[#09090b] border border-white/5 rounded-2xl p-4 text-sm text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors resize-none leading-relaxed"
+                                className="w-full h-32 md:h-36 bg-[#09090b] border border-white/5 rounded-2xl p-4 text-base text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-white/20 transition-colors resize-none leading-relaxed"
                                 maxLength={5000}
                             />
 
@@ -372,7 +372,7 @@ const Home = () => {
                                 <button
                                     type="button"
                                     onClick={() => setShowSelfDesc(!showSelfDesc)}
-                                    className="text-xs text-neutral-400 hover:text-neutral-200 underline font-mono"
+                                    className="text-sm text-neutral-400 hover:text-neutral-200 underline font-mono"
                                 >
                                     {showSelfDesc ? "Hide Extra Highlights" : "+ Add Experience Highlights / Self-Description"}
                                 </button>
@@ -380,7 +380,7 @@ const Home = () => {
                                     <button
                                         type="button"
                                         onClick={() => setJobDescription('')}
-                                        className="text-xs text-neutral-400 hover:text-neutral-300 font-mono"
+                                        className="text-sm text-neutral-400 hover:text-neutral-300 font-mono"
                                     >
                                         Clear Text
                                     </button>
@@ -392,7 +392,7 @@ const Home = () => {
                                     value={selfDescription}
                                     onChange={(e) => setSelfDescription(e.target.value)}
                                     placeholder="Add any extra accomplishments, metrics, or technologies not listed in your PDF..."
-                                    className="w-full h-20 bg-[#09090b] border border-white/5 rounded-xl p-3 text-xs text-neutral-300 placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors resize-none"
+                                    className="w-full h-24 bg-[#09090b] border border-white/5 rounded-xl p-3.5 text-sm text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors resize-none"
                                 />
                             )}
                         </div>
@@ -401,26 +401,26 @@ const Home = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Bento Card 1: ATS Compatibility */}
                             <div className="bg-[#121214] border border-white/5 rounded-3xl p-6 flex flex-col justify-between gap-4">
-                                <span className="text-xs text-neutral-400 font-mono">
+                                <span className="text-sm text-neutral-400 font-mono">
                                     • ATS Compatibility Rate
                                 </span>
                                 <div className="text-5xl font-light tracking-tight text-white font-mono">
                                     99%
                                 </div>
-                                <p className="text-xs text-neutral-400 font-light">
+                                <p className="text-sm text-neutral-300 font-light leading-relaxed">
                                     Clean semantic formatting passes automated applicant trackers with zero parsing drops.
                                 </p>
                             </div>
 
                             {/* Bento Card 2: 7-Day Sprint */}
                             <div className="bg-[#121214] border border-white/5 rounded-3xl p-6 flex flex-col justify-between gap-4">
-                                <span className="text-xs text-neutral-400 font-mono">
+                                <span className="text-sm text-neutral-400 font-mono">
                                     • Preparation Sprint
                                 </span>
                                 <div className="text-5xl font-light tracking-tight text-white font-mono">
                                     7 Days
                                 </div>
-                                <p className="text-xs text-neutral-400 font-light">
+                                <p className="text-sm text-neutral-300 font-light leading-relaxed">
                                     Day-by-day technical curriculum closing critical gaps before your first technical screen.
                                 </p>
                             </div>
@@ -432,24 +432,24 @@ const Home = () => {
                 <section id="recent-reports" className="pt-8 border-t border-white/[0.06] flex flex-col gap-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
-                            <div className="flex items-center gap-2 text-neutral-400 text-xs font-mono mb-1">
+                            <div className="flex items-center gap-2 text-neutral-400 text-sm font-mono mb-1">
                                 <span>•</span>
                                 <span>Archive</span>
                             </div>
-                            <h2 className="text-2xl font-normal text-white tracking-tight">
+                            <h2 className="text-2xl sm:text-3xl font-normal text-white tracking-tight">
                                 Saved Interview Strategies & Resumes
                             </h2>
                         </div>
 
                         {reports.length > 0 && (
                             <div className="relative w-full sm:w-72">
-                                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+                                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
                                 <input
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Search by job title..."
-                                    className="w-full pl-9 pr-4 py-2 bg-[#121214] border border-white/5 rounded-full text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-white/20"
+                                    className="w-full pl-9 pr-4 py-2.5 bg-[#121214] border border-white/5 rounded-full text-sm text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:border-white/20"
                                 />
                             </div>
                         )}
@@ -457,16 +457,16 @@ const Home = () => {
 
                     {reports.length === 0 ? (
                         <div className="bg-[#121214] border border-white/5 rounded-3xl p-12 flex flex-col items-center justify-center text-center gap-3">
-                            <Layers size={32} className="text-neutral-600" />
-                            <h3 className="text-base font-medium text-neutral-300">
+                            <Layers size={36} className="text-neutral-600" />
+                            <h3 className="text-lg font-medium text-neutral-200">
                                 No Career Strategies Generated Yet
                             </h3>
-                            <p className="text-xs text-neutral-400 max-w-md">
+                            <p className="text-sm text-neutral-400 max-w-md leading-relaxed">
                                 Paste a target job description and upload your resume above to create your first deep gap analysis and custom ATS resume.
                             </p>
                         </div>
                     ) : filteredReports.length === 0 ? (
-                        <div className="bg-[#121214] border border-white/5 rounded-3xl p-8 text-center text-xs text-neutral-400">
+                        <div className="bg-[#121214] border border-white/5 rounded-3xl p-8 text-center text-sm text-neutral-400">
                             No reports matching "{searchTerm}".
                         </div>
                     ) : (
@@ -483,16 +483,16 @@ const Home = () => {
                                         className="bg-[#121214] border border-white/5 hover:border-white/20 rounded-3xl p-6 flex flex-col justify-between gap-5 cursor-pointer transition-all hover:-translate-y-0.5 shadow-lg group"
                                     >
                                         <div className="flex flex-col gap-2">
-                                            <div className="flex items-center justify-between text-xs text-neutral-400 font-mono">
-                                                <span className="flex items-center gap-1">
-                                                    <Clock size={12} />
+                                            <div className="flex items-center justify-between text-sm text-neutral-400 font-mono">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Clock size={14} />
                                                     {new Date(reportItem.createdAt).toLocaleDateString([], {
                                                         month: 'short',
                                                         day: 'numeric',
                                                         year: 'numeric'
                                                     })}
                                                 </span>
-                                                <span className="px-2.5 py-0.5 rounded-full bg-white/[0.04] border border-white/5 text-[11px] text-orange-400">
+                                                <span className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/5 text-xs font-semibold text-orange-400">
                                                     {score}% Match
                                                 </span>
                                             </div>
@@ -501,7 +501,7 @@ const Home = () => {
                                                 {reportItem.title || "Untitled Engineering Role"}
                                             </h3>
 
-                                            <p className="text-xs text-neutral-400 line-clamp-2 font-light">
+                                            <p className="text-sm text-neutral-300 line-clamp-2 font-light leading-relaxed">
                                                 Click to review technical question bank, STAR behavioral answers, and 7-day preparation roadmap.
                                             </p>
                                         </div>
@@ -512,12 +512,12 @@ const Home = () => {
                                                 type="button"
                                                 onClick={(e) => onDownloadResume(e, reportItem._id)}
                                                 disabled={isDownloading}
-                                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-xs font-medium text-neutral-200 transition"
+                                                className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-sm font-medium text-neutral-200 transition"
                                             >
                                                 {isDownloading ? (
-                                                    <Loader2 size={13} className="animate-spin text-orange-400" />
+                                                    <Loader2 size={14} className="animate-spin text-orange-400" />
                                                 ) : (
-                                                    <Download size={13} />
+                                                    <Download size={14} />
                                                 )}
                                                 <span>{isDownloading ? "Generating..." : "Resume PDF"}</span>
                                             </button>
@@ -527,18 +527,18 @@ const Home = () => {
                                                     type="button"
                                                     onClick={(e) => onDeleteReport(e, reportItem._id)}
                                                     disabled={isDeleting}
-                                                    className="p-1.5 rounded-full text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                                                    className="p-2 rounded-full text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition"
                                                     title="Delete report"
                                                 >
                                                     {isDeleting ? (
-                                                        <Loader2 size={13} className="animate-spin" />
+                                                        <Loader2 size={14} className="animate-spin" />
                                                     ) : (
-                                                        <Trash2 size={13} />
+                                                        <Trash2 size={15} />
                                                     )}
                                                 </button>
 
-                                                <div className="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center group-hover:scale-105 transition-transform">
-                                                    <ArrowUpRight size={14} />
+                                                <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center group-hover:scale-105 transition-transform">
+                                                    <ArrowUpRight size={16} />
                                                 </div>
                                             </div>
                                         </div>
