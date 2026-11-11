@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useInterview } from '../hooks/useInterview';
 import Layout from '../../../components/Layout';
@@ -37,6 +37,15 @@ const Interview = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [openQuestions, setOpenQuestions] = useState({});
     const [copiedIndex, setCopiedIndex] = useState(null);
+    const copyTimeoutRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (copyTimeoutRef.current) {
+                clearTimeout(copyTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Persist completed roadmap tasks in localStorage across page refreshes
     const [completedTasks, setCompletedTasks] = useState(() => {
@@ -81,9 +90,11 @@ const Interview = () => {
     };
 
     const handleCopy = (text, key) => {
+        if (!text) return;
         navigator.clipboard.writeText(text);
         setCopiedIndex(key);
-        setTimeout(() => setCopiedIndex(null), 2000);
+        if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = setTimeout(() => setCopiedIndex(null), 2000);
     };
 
     // Toggle task in roadmap and save to localStorage
