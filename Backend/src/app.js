@@ -6,22 +6,34 @@ const rateLimit = require("express-rate-limit");
 
 const app = express();
 
+// Trust reverse proxy (essential for Render, Railway, Vercel for rate-limiting & secure cookies)
+app.set("trust proxy", 1);
+
 // Security Headers
 app.use(helmet());
 
 // Cross-Origin Resource Sharing
+const rawClientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
 const allowedOrigins = [
-    process.env.CLIENT_URL || "http://localhost:5173",
+    rawClientUrl,
+    "http://localhost:5173",
     "http://127.0.0.1:5173"
 ];
 
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps, curl, postman)
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin) return callback(null, true);
+        
+        const cleanOrigin = origin.replace(/\/$/, "");
+        if (
+            allowedOrigins.includes(cleanOrigin) ||
+            cleanOrigin.endsWith(".vercel.app") ||
+            process.env.NODE_ENV !== "production"
+        ) {
             callback(null, true);
         } else {
-            callback(null, true); // Fallback to allow dev flexibility
+            callback(new Error(`CORS blocked for origin: ${origin}`));
         }
     },
     credentials: true
@@ -35,7 +47,7 @@ app.use(cookieParser());
 // Rate Limiting
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 200, // limit each IP to 200 requests per windowMs
+    max: 300, // limit each IP to 300 requests per windowMs
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: "Too many requests from this IP, please try again after 15 minutes." }
@@ -43,13 +55,13 @@ const generalLimiter = rateLimit({
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 30, // limit login/register attempts
+    max: 40, // limit login/register attempts
     message: { message: "Too many authentication attempts, please try again after 15 minutes." }
 });
 
 const aiLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    max: 10, // max 10 AI operations per minute per IP
+    max: 15, // max 15 AI operations per minute per IP
     message: { message: "AI rate limit reached. Please wait a minute before making another request." }
 });
 
