@@ -28,6 +28,19 @@ async function registerUserController(req, res) {
         const normalizedEmail = email.trim().toLowerCase();
         const trimmedUsername = username.trim();
 
+        const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!EMAIL_REGEX.test(normalizedEmail)) {
+            return res.status(400).json({
+                message: "Please provide a valid email address format."
+            });
+        }
+
+        if (trimmedUsername.length < 2) {
+            return res.status(400).json({
+                message: "Username must be at least 2 characters long."
+            });
+        }
+
         if (password.length < 6) {
             return res.status(400).json({
                 message: "Password must be at least 6 characters long."
