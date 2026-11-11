@@ -124,6 +124,37 @@ const Interview = () => {
         });
     };
 
+    // Calculate memoized values BEFORE any early returns to satisfy React Hook rules
+    const score = report?.matchScore ?? 0;
+
+    const totalTasks = useMemo(() => {
+        return report?.preparationPlan?.reduce((acc, curr) => acc + (curr.tasks?.length || 0), 0) || 0;
+    }, [report?.preparationPlan]);
+
+    const completedTasksCount = useMemo(() => {
+        return Object.values(completedTasks).filter(Boolean).length;
+    }, [completedTasks]);
+
+    const roadmapProgressPct = totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0;
+
+    const filteredTechQuestions = useMemo(() => {
+        const query = (searchQuery || '').trim().toLowerCase();
+        if (!query) return report?.technicalQuestions || [];
+        return (report?.technicalQuestions || []).filter(q =>
+            q.question?.toLowerCase().includes(query) ||
+            q.answer?.toLowerCase().includes(query)
+        );
+    }, [report?.technicalQuestions, searchQuery]);
+
+    const filteredBehavioralQuestions = useMemo(() => {
+        const query = (searchQuery || '').trim().toLowerCase();
+        if (!query) return report?.behavioralQuestions || [];
+        return (report?.behavioralQuestions || []).filter(q =>
+            q.question?.toLowerCase().includes(query) ||
+            q.answer?.toLowerCase().includes(query)
+        );
+    }, [report?.behavioralQuestions, searchQuery]);
+
     if (loading || !report) {
         return (
             <Layout>
@@ -135,35 +166,6 @@ const Interview = () => {
             </Layout>
         );
     }
-
-    const score = report.matchScore ?? 0;
-    const totalTasks = useMemo(() => {
-        return report.preparationPlan?.reduce((acc, curr) => acc + (curr.tasks?.length || 0), 0) || 0;
-    }, [report.preparationPlan]);
-
-    const completedTasksCount = useMemo(() => {
-        return Object.values(completedTasks).filter(Boolean).length;
-    }, [completedTasks]);
-
-    const roadmapProgressPct = totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0;
-
-    const filteredTechQuestions = useMemo(() => {
-        const query = (searchQuery || '').trim().toLowerCase();
-        if (!query) return report.technicalQuestions || [];
-        return (report.technicalQuestions || []).filter(q =>
-            q.question?.toLowerCase().includes(query) ||
-            q.answer?.toLowerCase().includes(query)
-        );
-    }, [report.technicalQuestions, searchQuery]);
-
-    const filteredBehavioralQuestions = useMemo(() => {
-        const query = (searchQuery || '').trim().toLowerCase();
-        if (!query) return report.behavioralQuestions || [];
-        return (report.behavioralQuestions || []).filter(q =>
-            q.question?.toLowerCase().includes(query) ||
-            q.answer?.toLowerCase().includes(query)
-        );
-    }, [report.behavioralQuestions, searchQuery]);
 
     return (
         <Layout>
