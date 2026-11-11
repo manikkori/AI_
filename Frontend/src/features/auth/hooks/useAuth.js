@@ -1,6 +1,6 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { AuthContext } from "../auth.context";
-import { login, register, logout, getMe } from "../services/auth.api";
+import { login, register, logout } from "../services/auth.api";
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
@@ -17,6 +17,10 @@ export const useAuth = () => {
         try {
             const data = await login({ email, password });
             if (data?.user) {
+                if (data.token) {
+                    localStorage.setItem("token", data.token);
+                }
+                localStorage.setItem("user", JSON.stringify(data.user));
                 setUser(data.user);
                 return data.user;
             }
@@ -35,6 +39,10 @@ export const useAuth = () => {
         try {
             const data = await register({ username, email, password });
             if (data?.user) {
+                if (data.token) {
+                    localStorage.setItem("token", data.token);
+                }
+                localStorage.setItem("user", JSON.stringify(data.user));
                 setUser(data.user);
                 return data.user;
             }
@@ -51,36 +59,15 @@ export const useAuth = () => {
         setLoading(true);
         try {
             await logout();
-            setUser(null);
         } catch (err) {
-            console.error("Logout error:", err);
-            setUser(null); // still clear local state
+            console.error("Logout API error:", err);
         } finally {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            setUser(null);
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        // Fetch current user if not already set
-        if (!user) {
-            const getAndSetUser = async () => {
-                try {
-                    const data = await getMe();
-                    if (data?.user) {
-                        setUser(data.user);
-                    }
-                } catch (err) {
-                    // Not logged in or session expired
-                    setUser(null);
-                } finally {
-                    setLoading(false);
-                }
-            };
-            getAndSetUser();
-        } else {
-            setLoading(false);
-        }
-    }, []);
 
     return {
         user,
