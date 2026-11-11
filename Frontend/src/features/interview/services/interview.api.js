@@ -16,6 +16,21 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
+// Response interceptor to catch unauthorized responses cleanly
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            // If token is invalid or expired, clear it
+            const currentToken = localStorage.getItem("token");
+            if (currentToken && !window.location.pathname.includes('/login')) {
+                localStorage.removeItem("token");
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 /**
  * @description Service to generate interview report based on user self description, resume, and job description.
  */
