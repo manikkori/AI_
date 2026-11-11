@@ -372,7 +372,12 @@ const Interview = () => {
                                 </div>
 
                                 <div className="flex flex-col gap-4">
-                                    {filteredTechQuestions.map((q, idx) => {
+                                    {filteredTechQuestions.length === 0 ? (
+                                        <div className="py-12 text-center text-neutral-400 text-sm font-light">
+                                            No technical questions found matching "{searchQuery}".
+                                        </div>
+                                    ) : (
+                                        filteredTechQuestions.map((q, idx) => {
                                         const isOpen = openQuestions[`tech-${idx}`] ?? (idx === 0);
                                         const isPracticed = practicedQuestions[`tech-${idx}`];
 
@@ -471,7 +476,8 @@ const Interview = () => {
                                                 )}
                                             </div>
                                         );
-                                    })}
+                                    })
+                                )}
                                 </div>
                             </div>
                         )}
@@ -492,7 +498,12 @@ const Interview = () => {
                                 </div>
 
                                 <div className="flex flex-col gap-4">
-                                    {filteredBehavioralQuestions.map((q, idx) => {
+                                    {filteredBehavioralQuestions.length === 0 ? (
+                                        <div className="py-12 text-center text-neutral-400 text-sm font-light">
+                                            No behavioral questions found matching "{searchQuery}".
+                                        </div>
+                                    ) : (
+                                        filteredBehavioralQuestions.map((q, idx) => {
                                         const isOpen = openQuestions[`beh-${idx}`] ?? (idx === 0);
                                         const isPracticed = practicedQuestions[`beh-${idx}`];
 
@@ -583,7 +594,8 @@ const Interview = () => {
                                                 )}
                                             </div>
                                         );
-                                    })}
+                                    })
+                                )}
                                 </div>
                             </div>
                         )}
